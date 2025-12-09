@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, User, ChevronDown, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { TEXTS } from '@/constants/translations'
+import { useGlobalSearch } from '@/hooks/useData'
+import { SearchResults } from '@/components/search/SearchResults'
 import type { UserRole } from '@/types/app'
 
 interface HeaderProps {
@@ -41,16 +43,43 @@ export function Header({
   className
 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [showSearchResults, setShowSearchResults] = useState(false)
   const router = useRouter()
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const { data: searchResults, isLoading } = useGlobalSearch(debouncedQuery)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    if (searchQuery.trim().length >= 2) {
+      setShowSearchResults(true)
+    }
     if (onSearch) {
       onSearch(searchQuery)
     }
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    
+    // If user clears the search, close results
+    if (!value.trim()) {
+      setShowSearchResults(false)
+    }
+  }
+
   return (
+    <>
     <header className={cn("flex items-center justify-between px-6 py-3 bg-background border-b", className)}>
       {/* Search */}
       <div className="flex-1 max-w-md">
@@ -60,7 +89,7 @@ export function Header({
             type="text"
             placeholder="Müşteri, telefon, şirket ara..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleInputChange}
             className="pl-10 w-full"
           />
         </form>
@@ -109,5 +138,15 @@ export function Header({
         </DropdownMenu>
       </div>
     </header>
-  )
+
+    {/* Search Results Modal */}
+    <SearchResults
+      isOpen={showSearchResults}
+      onClose={() => setShowSearchResults(false)}
+      query={debouncedQuery}
+      results={searchResults || { customers: [], deals: [], contracts: [], payments: [] }}
+      isLoading={isLoading}
+    />
+  </>
+)
 }

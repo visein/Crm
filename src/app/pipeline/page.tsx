@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -9,7 +9,7 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
-  closestCorners,
+  pointerWithin,
   useDroppable,
 } from '@dnd-kit/core'
 import {
@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { useSalesPipeline, useUpdateSalesStatus } from '@/hooks/useData'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { handleAsyncError } from '@/lib/error-handler'
@@ -41,11 +42,17 @@ import {
   Building,
   Calendar,
   Clock,
-  Phone
+  Phone,
+  Settings2,
+  Maximize2,
+  Minimize2,
+  ArrowUpDown,
+  Star
 } from 'lucide-react'
 import type { SatisTakip } from '@/types/database'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { NewDealModal } from './components/NewDealModal'
+import { EditDealModal } from '@/components/modals/EditDealModal'
 
 // Extended type for pipeline data with joined customer info
 type PipelineDeal = SatisTakip & {
@@ -66,8 +73,28 @@ const PIPELINE_STAGES = [
   { id: 'Cevap Yok', title: 'Cevap Yok', color: 'bg-gray-50 border-gray-200' }
 ]
 
-// Draggable Deal Card Component
-function DealCard({ deal, isDragging }: { deal: PipelineDeal; isDragging?: boolean }) {
+// Card density types
+type CardDensity = 'compact' | 'normal' | 'spacious'
+
+// Sort options
+type SortOption = 'newest' | 'oldest' | 'priority' | 'service'
+
+// Draggable Deal Card Component with multiple sizes and expandable
+function DealCard({
+  deal,
+  isDragging,
+  onEdit,
+  density = 'normal',
+  isExpanded = false,
+  onToggleExpand
+}: {
+  deal: PipelineDeal;
+  isDragging?: boolean;
+  onEdit: (deal: PipelineDeal) => void;
+  density?: CardDensity;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+}) {
   const {
     attributes,
     listeners,
@@ -81,80 +108,207 @@ function DealCard({ deal, isDragging }: { deal: PipelineDeal; isDragging?: boole
     transition,
   }
 
+  // Debug log to check if isExpanded prop is working
+  console.log('DealCard render:', { dealId: deal.id, isExpanded, density })
+
+  // Simplified approach - no priority calculations for now
+  const isOld = false
+  const isPriority = false
+
+  // Card size classes based on density
+  const cardClasses = {
+    compact: isExpanded ? 'text-sm' : 'text-xs',
+    normal: 'text-sm',
+    spacious: 'text-base'
+  }
+
+  const paddingClasses = {
+    compact: isExpanded ? 'p-3' : 'py-0 px-3',
+    normal: 'p-3',
+    spacious: 'p-4'
+  }
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className={`cursor-move transition-shadow ${
-        isDragging ? 'shadow-lg rotate-2 opacity-80' : 'hover:shadow-md'
-      }`}
+      className={`transition-all duration-200 relative ${
+        isDragging ? 'shadow-lg rotate-1 opacity-80 scale-105' : 'hover:shadow-md'
+      } ${isOld ? 'border-red-300 bg-red-50' : isPriority ? 'border-yellow-300 bg-yellow-50' : ''} ${
+        isExpanded && density === 'compact' ? 'z-10 shadow-md border-blue-300' : ''
+      } ${density === 'compact' && !isExpanded ? 'shadow-sm' : ''}`}
     >
-      <CardContent className="p-3">
-        <div className="space-y-2">
-          {/* Customer Info */}
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-500" />
-            <span className="font-medium text-sm">
-              {deal.musteriler?.ad_soyad}
-            </span>
+      <CardContent
+        {...attributes}
+        {...listeners}
+        className={`${paddingClasses[density]} relative group ${cardClasses[density]} cursor-move`}
+      >
+        {/* Compact mode: Expand/Collapse in top right corner - COMPLETELY ISOLATED */}
+        {density === 'compact' && (
+          <div
+            className={`absolute top-0.5 right-0.5 z-30 transition-opacity duration-200 ${
+              isExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}
+            style={{ pointerEvents: 'auto' }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-blue-100 border border-blue-200 bg-white shadow-md rounded-sm"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('🔵 Expand button clicked! Deal ID:', deal.id, 'Current isExpanded:', isExpanded)
+                if (onToggleExpand) {
+                  onToggleExpand()
+                  console.log('🔵 onToggleExpand called!')
+                } else {
+                  console.log('❌ onToggleExpand is undefined!')
+                }
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation() // Stop drag from interfering
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation() // Stop drag from interfering
+              }}
+            >
+              {isExpanded ? (
+                <Minimize2 className="h-3.5 w-3.5 text-blue-600" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5 text-gray-600" />
+              )}
+            </Button>
           </div>
+        )}
 
-          {deal.musteriler?.sirket_adi && (
-            <div className="flex items-center gap-2">
-              <Building className="h-4 w-4 text-gray-500" />
-              <span className="text-xs text-gray-600">
-                {deal.musteriler.sirket_adi}
-              </span>
-            </div>
-          )}
-
-          {/* Service */}
-          <Badge variant="outline" className="text-xs">
-            {deal.ilgilenilen_hizmet}
-          </Badge>
-
-          {/* Contact Info */}
-          {deal.musteriler?.telefon && (
-            <div className="flex items-center gap-2">
-              <Phone className="h-3 w-3 text-gray-400" />
-              <span className="text-xs text-gray-600">
-                {deal.musteriler.telefon}
-              </span>
-            </div>
-          )}
-
-          {/* Date Info */}
-          <div className="flex items-center gap-2">
-            <Calendar className="h-3 w-3 text-gray-400" />
-            <span className="text-xs text-gray-600">
-              {formatRelativeTime(deal.talep_tarihi)}
-            </span>
+        {/* Priority indicator - Only for non-compact or expanded */}
+        {(isOld || isPriority) && (density !== 'compact' || isExpanded) && (
+          <div className="absolute top-1 left-1 z-10">
+            <Star className={`h-3 w-3 ${isOld ? 'text-red-500 fill-red-500' : 'text-yellow-500 fill-yellow-500'}`} />
           </div>
+        )}
 
-          {/* Follow-up Status */}
-          <div className="flex gap-1">
-            {deal.mail_1_durumu !== 'Bekliyor' && (
-              <Badge variant="secondary" className="text-xs">
-                Mail 1 ✓
+        <div
+          className={`${
+            density === 'compact'
+              ? isExpanded ? 'space-y-2' : ''
+              : density === 'spacious'
+                ? 'space-y-3'
+                : 'space-y-2'
+          }`}
+        >
+          {/* Compact mode: Only name and service when collapsed */}
+          {density === 'compact' && !isExpanded ? (
+            <div
+              className="cursor-pointer hover:bg-gray-50/50 rounded-sm transition-colors"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('Card body clicked for expand')
+                onToggleExpand?.()
+              }}
+            >
+              {/* Customer Name - Left aligned, ultra-tight line height */}
+              <div className="text-left">
+                <span className="font-medium text-sm leading-[0.9] block">
+                  {deal.musteriler?.ad_soyad}
+                </span>
+              </div>
+
+              {/* Service Badge - Perfectly aligned with customer name start */}
+              <div className="text-left mt-2">
+                <Badge variant="outline" className="py-0.5 px-2 h-4 text-xs leading-tight">
+                  {deal.ilgilenilen_hizmet}
+                </Badge>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Expanded/Normal mode - Normal kartın tüm bilgileri */}
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                <span className="font-medium truncate">
+                  {deal.musteriler?.ad_soyad}
+                </span>
+              </div>
+
+              {/* Service Badge */}
+              <Badge variant="outline" className="text-xs truncate">
+                {deal.ilgilenilen_hizmet}
               </Badge>
-            )}
-            {deal.mail_2_durumu !== 'Bekliyor' && (
-              <Badge variant="secondary" className="text-xs">
-                Mail 2 ✓
-              </Badge>
-            )}
-          </div>
 
-          {/* Won Date */}
-          {deal.kazanilma_tarihi && (
-            <div className="flex items-center gap-2">
-              <Clock className="h-3 w-3 text-green-500" />
-              <span className="text-xs text-green-600">
-                {formatDate(deal.kazanilma_tarihi)}
-              </span>
-            </div>
+              {/* Company Info */}
+              {deal.musteriler?.sirket_adi && (
+                <div className="flex items-center gap-1">
+                  <Building className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                  <span className="text-gray-600 truncate text-xs">
+                    {deal.musteriler.sirket_adi}
+                  </span>
+                </div>
+              )}
+
+              {/* Contact Info */}
+              {deal.musteriler?.telefon && (
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                  <span className="text-gray-600 text-xs truncate">
+                    {deal.musteriler.telefon}
+                  </span>
+                </div>
+              )}
+
+              {/* Date Info */}
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                <span className="text-gray-600 text-xs">
+                  {formatRelativeTime(deal.talep_tarihi)}
+                </span>
+              </div>
+
+              {/* Extra details for compact expanded mode */}
+              {density === 'compact' && isExpanded && (
+                <div className="space-y-1 pt-2 border-t border-gray-100">
+                  {/* Follow-up Status */}
+                  <div className="flex gap-1 flex-wrap">
+                    {deal.mail_1_durumu !== 'Bekliyor' && (
+                      <Badge variant="secondary" className="text-xs">
+                        Mail 1 ✓
+                      </Badge>
+                    )}
+                    {deal.mail_2_durumu !== 'Bekliyor' && (
+                      <Badge variant="secondary" className="text-xs">
+                        Mail 2 ✓
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Won Date */}
+                  {deal.kazanilma_tarihi && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-green-500" />
+                      <span className="text-xs text-green-600">
+                        {formatDate(deal.kazanilma_tarihi)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Edit button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-1"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      onEdit(deal)
+                    }}
+                  >
+                    ✏️ Düzenle
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </CardContent>
@@ -162,50 +316,133 @@ function DealCard({ deal, isDragging }: { deal: PipelineDeal; isDragging?: boole
   )
 }
 
-// Droppable Column Component
+// Modern Droppable Column Component
 function PipelineColumn({
   stage,
   deals,
-  isLoading
+  isLoading,
+  onEditDeal,
+  density,
+  sortBy,
+  columnSearchQuery,
+  onColumnSearchChange,
+  expandedCards,
+  onToggleCardExpand
 }: {
   stage: typeof PIPELINE_STAGES[0];
   deals: PipelineDeal[];
   isLoading: boolean;
+  onEditDeal: (deal: PipelineDeal) => void;
+  density: CardDensity;
+  sortBy: SortOption;
+  columnSearchQuery: string;
+  onColumnSearchChange: (query: string) => void;
+  expandedCards: Set<number>;
+  onToggleCardExpand: (dealId: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
   })
 
+  // Sort deals based on selected option
+  const sortedDeals = useMemo(() => {
+    const filtered = deals.filter(deal => {
+      if (!columnSearchQuery) return true
+      const searchLower = columnSearchQuery.toLowerCase()
+      return (
+        deal.musteriler?.ad_soyad?.toLowerCase().includes(searchLower) ||
+        deal.musteriler?.sirket_adi?.toLowerCase().includes(searchLower) ||
+        deal.ilgilenilen_hizmet?.toLowerCase().includes(searchLower)
+      )
+    })
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.talep_tarihi).getTime() - new Date(a.talep_tarihi).getTime()
+        case 'oldest':
+          return new Date(a.talep_tarihi).getTime() - new Date(b.talep_tarihi).getTime()
+        case 'priority': {
+          const aTime = new Date(a.talep_tarihi).getTime()
+          const bTime = new Date(b.talep_tarihi).getTime()
+          return aTime - bTime // Older first (older = higher priority)
+        }
+        case 'service':
+          return (a.ilgilenilen_hizmet || '').localeCompare(b.ilgilenilen_hizmet || '')
+        default:
+          return 0
+      }
+    })
+  }, [deals, sortBy, columnSearchQuery])
+
   return (
-    <div className="flex flex-col">
-      <div className={`${stage.color} rounded-lg border-2 border-dashed p-4 mb-4`}>
-        <h3 className="font-medium text-center">{stage.title}</h3>
-        <p className="text-sm text-gray-600 text-center mt-1">
-          {deals.length} deal
-        </p>
+    <div className="flex flex-col h-full">
+      {/* Column Header */}
+      <div className={`${stage.color} rounded-lg border p-3 mb-2`}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-medium text-sm">{stage.title}</h3>
+          <Badge variant="secondary" className="text-xs">
+            {sortedDeals.length}
+          </Badge>
+        </div>
+        
+        {/* Column Search */}
+        <div className="relative">
+          <Search className="absolute left-2 top-2 h-3 w-3 text-gray-400" />
+          <Input
+            placeholder="Ara..."
+            value={columnSearchQuery}
+            onChange={(e) => onColumnSearchChange(e.target.value)}
+            className="pl-7 h-7 text-xs"
+          />
+        </div>
       </div>
 
+      {/* Scrollable Cards Area - Expanded droppable zone */}
       <div
         ref={setNodeRef}
-        className={`flex-1 space-y-2 min-h-[400px] p-2 rounded-lg border-2 border-dashed transition-colors ${
+        className={`flex-1 rounded-lg border-2 border-dashed transition-colors min-h-[400px] ${
           isOver ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-gray-50'
         }`}
+        style={{ position: 'relative' }}
       >
-        {isLoading ? (
-          <div className="text-center py-8 text-gray-500">
-            Yükleniyor...
+        {/* Invisible expanded drop zone */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{ margin: '-10px' }}
+        />
+        <ScrollArea className="h-[calc(100vh-180px)] min-h-[500px]" type="always">
+          <div className={`p-2 ${
+            density === 'compact'
+              ? 'space-y-0.5'
+              : density === 'spacious'
+                ? 'space-y-3'
+                : 'space-y-2'
+          }`}>
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500 text-sm">
+                Yükleniyor...
+              </div>
+            ) : sortedDeals.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 text-sm">
+                {columnSearchQuery ? 'Sonuç bulunamadı' : 'Deal bulunmuyor'}
+              </div>
+            ) : (
+              <SortableContext items={sortedDeals.map(deal => deal.id.toString())} strategy={verticalListSortingStrategy}>
+                {sortedDeals.map((deal: PipelineDeal) => (
+                  <DealCard
+                    key={deal.id}
+                    deal={deal}
+                    onEdit={onEditDeal}
+                    density={density}
+                    isExpanded={expandedCards.has(deal.id)}
+                    onToggleExpand={() => onToggleCardExpand(deal.id)}
+                  />
+                ))}
+              </SortableContext>
+            )}
           </div>
-        ) : deals.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            Deal bulunmuyor
-          </div>
-        ) : (
-          <SortableContext items={deals.map(deal => deal.id.toString())} strategy={verticalListSortingStrategy}>
-            {deals.map((deal: PipelineDeal) => (
-              <DealCard key={deal.id} deal={deal} />
-            ))}
-          </SortableContext>
-        )}
+        </ScrollArea>
       </div>
     </div>
   )
@@ -216,14 +453,49 @@ export default function PipelinePage() {
   const [serviceFilter, setServiceFilter] = useState<string>('all')
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isNewDealModalOpen, setIsNewDealModalOpen] = useState(false)
+  const [editingDeal, setEditingDeal] = useState<PipelineDeal | null>(null)
+  
+  // New states for enhanced pipeline
+  const [density] = useState<CardDensity>('compact')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [columnSearchQueries, setColumnSearchQueries] = useState<Record<string, string>>({})
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set())
   
   const { data: pipelineData, isLoading, error } = useSalesPipeline()
   const updateSalesStatus = useUpdateSalesStatus()
 
+  // Toggle card expansion with debug logging
+  const toggleCardExpand = useCallback((dealId: number) => {
+    console.log('🟢 toggleCardExpand called for deal:', dealId)
+    setExpandedCards(prev => {
+      const newSet = new Set(prev)
+      const wasExpanded = newSet.has(dealId)
+      if (wasExpanded) {
+        newSet.delete(dealId)
+        console.log('🟢 Card collapsed:', dealId)
+      } else {
+        newSet.add(dealId)
+        console.log('🟢 Card expanded:', dealId)
+      }
+      console.log('🟢 New expanded cards set:', Array.from(newSet))
+      return newSet
+    })
+  }, [])
+
+  // Handle column search
+  const handleColumnSearch = useCallback((stageId: string, query: string) => {
+    setColumnSearchQueries(prev => ({
+      ...prev,
+      [stageId]: query
+    }))
+  }, [])
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 3, // Küçük mesafe, daha responsive
+        delay: 0,
+        tolerance: 5,
       },
     })
   )
@@ -320,75 +592,7 @@ export default function PipelinePage() {
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtreler
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Müşteri, şirket veya hizmet ara..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <Select value={serviceFilter} onValueChange={setServiceFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Hizmet Seç" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tüm Hizmetler</SelectItem>
-                <SelectItem value="Sanal Ofis">Sanal Ofis</SelectItem>
-                <SelectItem value="Hazır Ofis">Hazır Ofis</SelectItem>
-                <SelectItem value="Coworking">Coworking</SelectItem>
-                <SelectItem value="Toplantı">Toplantı Salonu</SelectItem>
-                <SelectItem value="Etkinlik">Etkinlik</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pipeline Board */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {PIPELINE_STAGES.map((stage) => {
-            const stageDeals = filterDeals(groupedDeals[stage.id] || [])
-            
-            return (
-              <PipelineColumn
-                key={stage.id}
-                stage={stage}
-                deals={stageDeals}
-                isLoading={isLoading}
-              />
-            )
-          })}
-        </div>
-
-        <DragOverlay>
-          {activeId && activeDeal ? (
-            <DealCard deal={activeDeal} isDragging />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      {/* Stats Summary */}
+      {/* Pipeline Stats Summary - Moved to top */}
       <Card>
         <CardHeader>
           <CardTitle>Pipeline Özeti</CardTitle>
@@ -408,10 +612,141 @@ export default function PipelinePage() {
         </CardContent>
       </Card>
 
+      {/* Enhanced Filters & Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtreler & Görünüm
+            </div>
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              <span className="text-sm text-gray-600">Pipeline Ayarları</span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Search and Service Filter Row */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Global arama: müşteri, şirket, hizmet..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Hizmet Seç" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm Hizmetler</SelectItem>
+                  <SelectItem value="Sanal Ofis">Sanal Ofis</SelectItem>
+                  <SelectItem value="Hazır Ofis">Hazır Ofis</SelectItem>
+                  <SelectItem value="Coworking">Coworking</SelectItem>
+                  <SelectItem value="Toplantı">Toplantı Salonu</SelectItem>
+                  <SelectItem value="Etkinlik">Etkinlik</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* View Controls Row */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Sort Options */}
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-600">Sıralama:</span>
+                <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Yeniler Üstte</SelectItem>
+                    <SelectItem value="oldest">Eskiler Üstte</SelectItem>
+                    <SelectItem value="priority">Öncelik</SelectItem>
+                    <SelectItem value="service">Hizmet A-Z</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Expanded Cards Count */}
+              {expandedCards.size > 0 && (
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <Maximize2 className="h-4 w-4" />
+                  {expandedCards.size} kart büyütüldü
+                </div>
+              )}
+
+              {/* Tip */}
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                💡 Kartlara tıklayarak büyütüp küçültebilirsiniz
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Pipeline Board */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 min-h-[700px] h-[calc(100vh-300px)]">
+          {PIPELINE_STAGES.map((stage) => {
+            const stageDeals = filterDeals(groupedDeals[stage.id] || [])
+            
+            return (
+              <PipelineColumn
+                key={stage.id}
+                stage={stage}
+                deals={stageDeals}
+                isLoading={isLoading}
+                onEditDeal={setEditingDeal}
+                density={density}
+                sortBy={sortBy}
+                columnSearchQuery={columnSearchQueries[stage.id] || ''}
+                onColumnSearchChange={(query) => handleColumnSearch(stage.id, query)}
+                expandedCards={expandedCards}
+                onToggleCardExpand={toggleCardExpand}
+              />
+            )
+          })}
+        </div>
+
+        <DragOverlay>
+          {activeId && activeDeal ? (
+            <DealCard
+              deal={activeDeal}
+              isDragging
+              onEdit={() => {}}
+              density={density}
+              isExpanded={expandedCards.has(activeDeal.id)}
+              onToggleExpand={() => {}}
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
       {/* New Deal Modal */}
       <NewDealModal
         isOpen={isNewDealModalOpen}
         onOpenChange={setIsNewDealModalOpen}
+      />
+
+      {/* Edit Deal Modal */}
+      <EditDealModal
+        deal={editingDeal}
+        isOpen={!!editingDeal}
+        onClose={() => setEditingDeal(null)}
       />
     </div>
     </AppLayout>

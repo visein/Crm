@@ -109,6 +109,21 @@ export async function updateSalesStatus(id: number, status: string) {
   return data
 }
 
+// Update sales record
+export async function updateSalesRecord(
+  id: number,
+  updates: Database['public']['Tables']['satis_takip']['Update']
+) {
+  const { data, error } = await supabase
+    .from('satis_takip')
+    .update(updates)
+    .eq('id', id)
+    .select()
+
+  if (error) throw error
+  return data
+}
+
 // Contract queries
 export async function fetchContracts() {
   const { data, error } = await supabase
@@ -381,4 +396,104 @@ export async function fetchCustomersWithOperations() {
 
   if (error) throw error
   return data || []
+}
+
+// Dashboard lead trend query
+export async function fetchWeeklyLeadTrend() {
+  // Get last 7 days of customer creation data
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setDate(endDate.getDate() - 6) // 7 days including today
+
+  const { data, error } = await supabase
+    .from('musteriler')
+    .select('created_at')
+    .gte('created_at', startDate.toISOString().split('T')[0])
+    .lte('created_at', endDate.toISOString().split('T')[0])
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+
+  // Group by day
+  const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
+  const shortDayNames = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt']
+  
+  const trendData = []
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate)
+    currentDate.setDate(startDate.getDate() + i)
+    const dateStr = currentDate.toISOString().split('T')[0]
+    
+    const count = data?.filter(customer =>
+      customer.created_at.startsWith(dateStr)
+    ).length || 0
+
+    trendData.push({
+      name: shortDayNames[currentDate.getDay()],
+      fullName: dayNames[currentDate.getDay()],
+      value: count,
+      date: dateStr
+    })
+  }
+
+  return trendData
+}
+
+// Global search across all entities
+export async function globalSearch(query: string) {
+  if (!query.trim()) return { customers: [], deals: [], contracts: [], payments: [] }
+
+  const searchPattern = `%${query.trim()}%`
+  
+  // Search customers
+  const { data: customers, error: customersError } = await supabase
+    .from('musteriler')
+    .select('*')
+    .or(`ad_soyad.ilike.${searchPattern},telefon.ilike.${searchPattern},sirket_adi.ilike.${searchPattern},email.ilike.${searchPattern}`)
+    .limit(10)
+
+  if (customersError) console.error('Customer search error:', customersError)
+
+  // Search deals/sales
+  const { data: deals, error: dealsError } = await supabase
+    .from('satis_takip')
+    .select(`
+      *,
+      musteriler(ad_soyad, sirket_adi, telefon)
+    `)
+    .or(`ilgilenilen_hizmet.ilike.${searchPattern},satis_durumu.ilike.${searchPattern}`)
+    .limit(10)
+
+  if (dealsError) console.error('Deals search error:', dealsError)
+
+  // Search contracts
+  const { data: contracts, error: contractsError } = await supabase
+    .from('sozlesmeler')
+    .select(`
+      *,
+      musteriler(ad_soyad, sirket_adi, telefon)
+    `)
+    .or(`hizmet_tipi.ilike.${searchPattern}`)
+    .limit(10)
+
+  if (contractsError) console.error('Contracts search error:', contractsError)
+
+  // Search payments
+  const { data: payments, error: paymentsError } = await supabase
+    .from('odemeler')
+    .select(`
+      *,
+      musteriler(ad_soyad, sirket_adi, telefon)
+    `)
+    .or(`durum.ilike.${searchPattern},aciklama.ilike.${searchPattern}`)
+    .limit(10)
+
+  if (paymentsError) console.error('Payments search error:', paymentsError)
+
+  return {
+    customers: customers || [],
+    deals: deals || [],
+    contracts: contracts || [],
+    payments: payments || []
+  }
 }

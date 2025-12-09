@@ -7,7 +7,7 @@ import { SimplePieChart } from '@/components/charts/SimplePieChart'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useWeeklyReport, useSalesPipeline, useOverduePayments, useExpiringContracts } from '@/hooks/useData'
+import { useWeeklyReport, useSalesPipeline, useOverduePayments, useExpiringContracts, useWeeklyLeadTrend } from '@/hooks/useData'
 import { formatTurkishCurrency, getRelativeTime } from '@/lib/utils'
 import { toast } from 'sonner'
 import { AlertTriangle, TrendingUp, Users, MessageSquare, CreditCard, FileText, Download } from 'lucide-react'
@@ -101,6 +101,7 @@ export default function DashboardPage() {
   const { data: salesPipeline, isLoading: pipelineLoading } = useSalesPipeline()
   const { data: overduePayments, isLoading: overdueLoading } = useOverduePayments()
   const { data: expiringContracts, isLoading: contractsLoading } = useExpiringContracts(30)
+  const { data: weeklyLeadTrend, isLoading: leadTrendLoading } = useWeeklyLeadTrend()
 
   // Process pipeline data for charts
   const pipelineStats = (salesPipeline as SalesPipelineWithCustomer[])?.reduce((acc, deal) => {
@@ -115,16 +116,8 @@ export default function DashboardPage() {
     fill: getStatusColor(name)
   }))
 
-  // Chart data with correct property names
-  const leadsChartData = [
-    { name: 'Paz', value: 12 },
-    { name: 'Pzt', value: 19 },
-    { name: 'Sal', value: 15 },
-    { name: 'Çar', value: 22 },
-    { name: 'Per', value: 18 },
-    { name: 'Cum', value: 25 },
-    { name: 'Cmt', value: 16 },
-  ]
+  // Real lead trend data
+  const leadsChartData = weeklyLeadTrend || []
 
   if (weeklyError) {
     return (
@@ -209,10 +202,16 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SimpleBarChart
-              data={leadsChartData}
-              height={300}
-            />
+            {leadTrendLoading ? (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="text-gray-500">Yükleniyor...</div>
+              </div>
+            ) : (
+              <SimpleBarChart
+                data={leadsChartData}
+                height={300}
+              />
+            )}
           </CardContent>
         </Card>
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -19,10 +19,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { useCreateCustomer } from '@/hooks/useData'
 import { handleAsyncError } from '@/lib/error-handler'
 import { toast } from 'sonner'
 import { Plus, Save, X } from 'lucide-react'
+import { customerSchema, type CustomerFormData } from '@/lib/validation-schemas'
 import type { MusteriInsert } from '@/types/database'
 
 interface AddCustomerModalProps {
@@ -31,50 +40,38 @@ interface AddCustomerModalProps {
 }
 
 export function AddCustomerModal({ isOpen, onClose }: AddCustomerModalProps) {
-  const [formData, setFormData] = useState<Partial<MusteriInsert>>({
-    ad_soyad: '',
-    telefon: '',
-    email: '',
-    sirket_adi: '',
-    sektor: '',
-    kaynak: 'Web',
-    notlar: ''
-  })
-
   const createCustomer = useCreateCustomer()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.ad_soyad) {
-      toast.warning('Ad soyad alanı zorunludur')
-      return
+  const form = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: {
+      ad_soyad: '',
+      telefon: '',
+      email: '',
+      sirket_adi: '',
+      sektor: '',
+      kaynak: 'Web',
+      notlar: ''
     }
+  })
 
+  const handleSubmit = async (data: CustomerFormData) => {
     try {
-      await createCustomer.mutateAsync({
-        ad_soyad: formData.ad_soyad,
-        telefon: formData.telefon || null,
-        email: formData.email || null,
-        sirket_adi: formData.sirket_adi || null,
-        sektor: formData.sektor || null,
-        kaynak: formData.kaynak || 'Web',
-        notlar: formData.notlar || null,
+      const submitData: MusteriInsert = {
+        ad_soyad: data.ad_soyad,
+        telefon: data.telefon || null,
+        email: data.email || null,
+        sirket_adi: data.sirket_adi || null,
+        sektor: data.sektor || null,
+        kaynak: data.kaynak || 'Web',
+        notlar: data.notlar || null,
         dogum_tarihi: null,
         whatsapp_raw_id: null
-      })
+      }
+
+      await createCustomer.mutateAsync(submitData)
       
-      // Reset form
-      setFormData({
-        ad_soyad: '',
-        telefon: '',
-        email: '',
-        sirket_adi: '',
-        sektor: '',
-        kaynak: 'Web',
-        notlar: ''
-      })
-      
+      form.reset()
       toast.success('Müşteri başarıyla eklendi!')
       onClose()
     } catch (error) {
@@ -84,16 +81,7 @@ export function AddCustomerModal({ isOpen, onClose }: AddCustomerModalProps) {
   }
 
   const handleClose = () => {
-    // Reset form when closing
-    setFormData({
-      ad_soyad: '',
-      telefon: '',
-      email: '',
-      sirket_adi: '',
-      sektor: '',
-      kaynak: 'Web',
-      notlar: ''
-    })
+    form.reset()
     onClose()
   }
 
@@ -110,98 +98,147 @@ export function AddCustomerModal({ isOpen, onClose }: AddCustomerModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="ad_soyad">Ad Soyad *</Label>
-              <Input
-                id="ad_soyad"
-                value={formData.ad_soyad || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, ad_soyad: e.target.value }))}
-                placeholder="Müşteri adı soyadı"
-                required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="ad_soyad"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ad Soyad *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Müşteri adı soyadı"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="telefon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefon</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="05xxxxxxxxx"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="musteri@email.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sirket_adi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Şirket Adı</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Şirket adı"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sektor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sektör</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Örn: Teknoloji, Danışmanlık"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="kaynak"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kaynak</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Kaynak seçin" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Web">Web Sitesi</SelectItem>
+                        <SelectItem value="Phone">Telefon</SelectItem>
+                        <SelectItem value="Referral">Referans</SelectItem>
+                        <SelectItem value="Social Media">Sosyal Medya</SelectItem>
+                        <SelectItem value="Walk-in">Direkt Ziyaret</SelectItem>
+                        <SelectItem value="Other">Diğer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div>
-              <Label htmlFor="telefon">Telefon</Label>
-              <Input
-                id="telefon"
-                value={formData.telefon || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, telefon: e.target.value }))}
-                placeholder="90xxxxxxxxxx"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="musteri@email.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sirket_adi">Şirket Adı</Label>
-              <Input
-                id="sirket_adi"
-                value={formData.sirket_adi || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, sirket_adi: e.target.value }))}
-                placeholder="Şirket adı"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sektor">Sektör</Label>
-              <Input
-                id="sektor"
-                value={formData.sektor || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, sektor: e.target.value }))}
-                placeholder="Örn: Teknoloji, Danışmanlık"
-              />
-            </div>
-            <div>
-              <Label htmlFor="kaynak">Kaynak</Label>
-              <Select 
-                value={formData.kaynak} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, kaynak: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Kaynak seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Web">Web Sitesi</SelectItem>
-                  <SelectItem value="Phone">Telefon</SelectItem>
-                  <SelectItem value="Referral">Referans</SelectItem>
-                  <SelectItem value="Social Media">Sosyal Medya</SelectItem>
-                  <SelectItem value="Walk-in">Direkt Ziyaret</SelectItem>
-                  <SelectItem value="Other">Diğer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div>
-            <Label htmlFor="notlar">Notlar</Label>
-            <Textarea
-              id="notlar"
-              value={formData.notlar || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, notlar: e.target.value }))}
-              placeholder="Müşteri hakkında notlar..."
-              rows={3}
+            <FormField
+              control={form.control}
+              name="notlar"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notlar</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Müşteri hakkında notlar..."
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              <X className="h-4 w-4 mr-1" />
-              İptal
-            </Button>
-            <Button type="submit" disabled={createCustomer.isPending}>
-              <Save className="h-4 w-4 mr-1" />
-              {createCustomer.isPending ? 'Kaydediliyor...' : 'Kaydet'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                <X className="h-4 w-4 mr-1" />
+                İptal
+              </Button>
+              <Button type="submit" disabled={createCustomer.isPending}>
+                <Save className="h-4 w-4 mr-1" />
+                {createCustomer.isPending ? 'Kaydediliyor...' : 'Kaydet'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

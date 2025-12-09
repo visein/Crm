@@ -23,6 +23,7 @@ import {
 import { useContracts, useExpiringContracts } from '@/hooks/useData'
 import { formatDate, formatCurrency, getDaysUntil } from '@/lib/utils'
 import { AddContractModal } from '@/components/modals/AddContractModal'
+import { EditContractModal } from '@/components/modals/EditContractModal'
 import { 
   Search, 
   Plus, 
@@ -53,6 +54,8 @@ export default function ContractsPage() {
   const [serviceFilter, setServiceFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedContract, setSelectedContract] = useState<ContractWithCustomer | null>(null)
   
   const { data: contracts, isLoading, error } = useContracts()
   const { data: expiringContracts } = useExpiringContracts(30)
@@ -110,6 +113,16 @@ export default function ContractsPage() {
 
   const handleCloseAddModal = () => {
     setIsAddModalOpen(false)
+  }
+
+  const handleEditContract = (contract: ContractWithCustomer) => {
+    setSelectedContract(contract)
+    setIsEditModalOpen(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setSelectedContract(null)
   }
 
   if (error) {
@@ -351,7 +364,11 @@ export default function ContractsPage() {
                       </TableCell>
                       
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditContract(contract)}
+                        >
                           <Edit className="h-4 w-4 mr-1" />
                           Düzenle
                         </Button>
@@ -369,6 +386,13 @@ export default function ContractsPage() {
       <AddContractModal
         isOpen={isAddModalOpen}
         onClose={handleCloseAddModal}
+      />
+
+      {/* Edit Contract Modal */}
+      <EditContractModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        contract={selectedContract}
       />
     </div>
     </AppLayout>

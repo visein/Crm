@@ -42,9 +42,12 @@ import {
   MessageCircle,
   Edit,
   Save,
-  X
+  X,
+  Plus
 } from 'lucide-react'
 import type { Musteri, SatisTakip, Sozlesme, Odeme, Etkilesim } from '@/types/database'
+import { AddDealModal } from './AddDealModal'
+import { EditDealModal } from './EditDealModal'
 
 interface CustomerDetailModalProps {
   customerId: number | null
@@ -55,6 +58,11 @@ interface CustomerDetailModalProps {
 export function CustomerDetailModal({ customerId, isOpen, onClose }: CustomerDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState<Partial<Musteri>>({})
+  
+  // Deal modal states
+  const [showAddDeal, setShowAddDeal] = useState(false)
+  const [showEditDeal, setShowEditDeal] = useState(false)
+  const [selectedDeal, setSelectedDeal] = useState<SatisTakip | null>(null)
 
   const { data: customer, isLoading } = useCustomerById(customerId)
   const { data: deals } = useCustomerDeals(customerId)
@@ -324,38 +332,71 @@ export function CustomerDetailModal({ customerId, isOpen, onClose }: CustomerDet
 
           <TabsContent value="deals" className="space-y-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Satış Takibi</CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => setShowAddDeal(true)}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Yeni Satış Ekle
+                </Button>
               </CardHeader>
               <CardContent>
                 {deals && deals.length > 0 ? (
                   <div className="space-y-3">
                     {deals.map((deal: SatisTakip) => (
                       <div key={deal.id} className="flex items-center justify-between p-3 border rounded">
-                        <div>
+                        <div className="flex-1">
                           <div className="font-medium">{deal.ilgilenilen_hizmet}</div>
                           <div className="text-sm text-gray-500">
                             Talep Tarihi: {formatDate(deal.talep_tarihi)}
                           </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Mail: {deal.mail_1_durumu} | {deal.mail_2_durumu}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <Badge 
-                            variant={deal.satis_durumu === 'Kazanıldı' ? 'default' : 
-                                   deal.satis_durumu === 'Kaybedildi' ? 'destructive' : 'secondary'}
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <Badge
+                              variant={deal.satis_durumu === 'Kazanıldı' ? 'default' :
+                                     deal.satis_durumu === 'Kaybedildi' ? 'destructive' : 'secondary'}
+                            >
+                              {deal.satis_durumu}
+                            </Badge>
+                            {deal.kazanilma_tarihi && (
+                              <div className="text-sm text-gray-500 mt-1">
+                                {formatDate(deal.kazanilma_tarihi)}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedDeal(deal)
+                              setShowEditDeal(true)
+                            }}
                           >
-                            {deal.satis_durumu}
-                          </Badge>
-                          {deal.kazanilma_tarihi && (
-                            <div className="text-sm text-gray-500 mt-1">
-                              {formatDate(deal.kazanilma_tarihi)}
-                            </div>
-                          )}
+                            <Edit className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">Henüz satış kaydı bulunmuyor</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">Henüz satış kaydı bulunmuyor</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAddDeal(true)}
+                      className="gap-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      İlk Satış Kaydını Ekle
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -509,6 +550,25 @@ export function CustomerDetailModal({ customerId, isOpen, onClose }: CustomerDet
             </Card>
           </TabsContent>
         </Tabs>
+        
+        {/* Deal Modals */}
+        {customerId && (
+          <>
+            <AddDealModal
+              customerId={customerId}
+              isOpen={showAddDeal}
+              onClose={() => setShowAddDeal(false)}
+            />
+            <EditDealModal
+              deal={selectedDeal}
+              isOpen={showEditDeal}
+              onClose={() => {
+                setShowEditDeal(false)
+                setSelectedDeal(null)
+              }}
+            />
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )

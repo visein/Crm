@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as queries from '@/lib/queries'
-import type { Musteri, Sozlesme, SatisTakip } from '@/types/database'
+import type { Musteri, Sozlesme, SatisTakip, Odeme } from '@/types/database'
 
 // Pipeline deal type with customer info
 type PipelineDeal = SatisTakip & {
@@ -26,7 +26,9 @@ export const queryKeys = {
     customerId ? ['interactions', 'customer', customerId] : ['interactions'] as const,
   operationDetails: (customerId: number) => ['operation-details', customerId] as const,
   weeklyReport: ['weekly-report'] as const,
+  weeklyLeadTrend: ['weekly-lead-trend'] as const,
   search: (query: string) => ['search', query] as const,
+  globalSearch: (query: string) => ['global-search', query] as const,
 }
 
 // Customer hooks
@@ -111,12 +113,47 @@ export function useSearchCustomers(query: string) {
   })
 }
 
+export function useGlobalSearch(query: string) {
+  return useQuery({
+    queryKey: queryKeys.globalSearch(query),
+    queryFn: () => queries.globalSearch(query),
+    enabled: query.length >= 2, // Minimum 2 characters
+    staleTime: 30 * 1000, // 30 seconds
+  })
+}
+
 export function useCreateCustomer() {
   const queryClient = useQueryClient()
   
   return useMutation({
     mutationFn: queries.createCustomer,
+    onMutate: async (newCustomer) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.customers })
+
+      // Snapshot previous value
+      const previousCustomers = queryClient.getQueryData(queryKeys.customers)
+
+      // Optimistically add the new customer (with temporary ID)
+      const optimisticCustomer = {
+        ...newCustomer,
+        id: Date.now(), // Temporary ID
+        created_at: new Date().toISOString()
+      }
+
+      queryClient.setQueryData(queryKeys.customers, (oldData: Musteri[] | undefined) => {
+        return [optimisticCustomer as Musteri, ...(oldData || [])]
+      })
+
+      return { previousCustomers, optimisticCustomer }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousCustomers) {
+        queryClient.setQueryData(queryKeys.customers, context.previousCustomers)
+      }
+    },
     onSuccess: () => {
+      // Remove optimistic update and let the real data come through
       queryClient.invalidateQueries({ queryKey: queryKeys.customers })
     },
   })
@@ -128,7 +165,40 @@ export function useUpdateCustomer() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: Partial<Musteri> }) =>
       queries.updateCustomer(id, updates),
-    onSuccess: (_, { id }) => {
+    onMutate: async ({ id, updates }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.customers })
+      await queryClient.cancelQueries({ queryKey: queryKeys.customer(id) })
+
+      // Snapshot the previous values
+      const previousCustomers = queryClient.getQueryData(queryKeys.customers)
+      const previousCustomer = queryClient.getQueryData(queryKeys.customer(id))
+
+      // Optimistically update customers list
+      queryClient.setQueryData(queryKeys.customers, (oldData: Musteri[] | undefined) => {
+        if (!oldData) return oldData
+        return oldData.map(customer =>
+          customer.id === id ? { ...customer, ...updates } : customer
+        )
+      })
+
+      // Optimistically update individual customer
+      queryClient.setQueryData(queryKeys.customer(id), (oldData: Musteri | undefined) => {
+        if (!oldData) return oldData
+        return { ...oldData, ...updates }
+      })
+
+      return { previousCustomers, previousCustomer }
+    },
+    onError: (err, { id }, context) => {
+      if (context?.previousCustomers) {
+        queryClient.setQueryData(queryKeys.customers, context.previousCustomers)
+      }
+      if (context?.previousCustomer) {
+        queryClient.setQueryData(queryKeys.customer(id), context.previousCustomer)
+      }
+    },
+    onSettled: (_, __, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.customers })
       queryClient.invalidateQueries({ queryKey: queryKeys.customer(id) })
     },
@@ -215,6 +285,47 @@ export function useCreateSalesRecord() {
   })
 }
 
+export function useUpdateSalesRecord() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<SatisTakip> }) =>
+      queries.updateSalesRecord(id, updates),
+    onMutate: async ({ id, updates }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.salesPipeline })
+      await queryClient.cancelQueries({ queryKey: ['customer-deals'] })
+
+      // Snapshot previous values
+      const previousPipeline = queryClient.getQueryData(queryKeys.salesPipeline)
+      const previousCustomerDeals = queryClient.getQueryData(['customer-deals'])
+
+      // Optimistically update sales pipeline
+      queryClient.setQueryData(queryKeys.salesPipeline, (oldData: PipelineDeal[] | undefined) => {
+        if (!oldData) return oldData
+        return oldData.map(deal =>
+          deal.id === id ? { ...deal, ...updates } : deal
+        )
+      })
+
+      return { previousPipeline, previousCustomerDeals }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousPipeline) {
+        queryClient.setQueryData(queryKeys.salesPipeline, context.previousPipeline)
+      }
+      if (context?.previousCustomerDeals) {
+        queryClient.setQueryData(['customer-deals'], context.previousCustomerDeals)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.salesPipeline })
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers })
+      queryClient.invalidateQueries({ queryKey: ['customer-deals'] })
+    },
+  })
+}
+
 // Contract hooks
 export function useContracts() {
   return useQuery({
@@ -250,7 +361,29 @@ export function useUpdateContract() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: Partial<Sozlesme> }) =>
       queries.updateContract(id, updates),
-    onSuccess: () => {
+    onMutate: async ({ id, updates }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.contracts })
+
+      // Snapshot previous value
+      const previousContracts = queryClient.getQueryData(queryKeys.contracts)
+
+      // Optimistically update contracts
+      queryClient.setQueryData(queryKeys.contracts, (oldData: (Sozlesme & { musteriler?: { ad_soyad: string; sirket_adi?: string | null } | null })[] | undefined) => {
+        if (!oldData) return oldData
+        return oldData.map(contract =>
+          contract.id === id ? { ...contract, ...updates } : contract
+        )
+      })
+
+      return { previousContracts }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousContracts) {
+        queryClient.setQueryData(queryKeys.contracts, context.previousContracts)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts })
       queryClient.invalidateQueries({ queryKey: queryKeys.customers })
     },
@@ -280,7 +413,46 @@ export function useUpdatePaymentStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
       queries.updatePaymentStatus(id, status),
-    onSuccess: () => {
+    onMutate: async ({ id, status }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: queryKeys.payments })
+      await queryClient.cancelQueries({ queryKey: queryKeys.overduePayments })
+
+      // Snapshot previous values
+      const previousPayments = queryClient.getQueryData(queryKeys.payments)
+      const previousOverduePayments = queryClient.getQueryData(queryKeys.overduePayments)
+
+      // Optimistically update payments
+      queryClient.setQueryData(queryKeys.payments, (oldData: (Odeme & { musteriler?: { ad_soyad: string; sirket_adi?: string | null } | null })[] | undefined) => {
+        if (!oldData) return oldData
+        return oldData.map(payment =>
+          payment.id === id ? { ...payment, durum: status } : payment
+        )
+      })
+
+      // Optimistically update overdue payments
+      queryClient.setQueryData(queryKeys.overduePayments, (oldData: (Odeme & { musteriler?: { ad_soyad: string; sirket_adi?: string | null } | null })[] | undefined) => {
+        if (!oldData) return oldData
+        if (status === 'Ödendi') {
+          // Remove from overdue list if paid
+          return oldData.filter(payment => payment.id !== id)
+        }
+        return oldData.map(payment =>
+          payment.id === id ? { ...payment, durum: status } : payment
+        )
+      })
+
+      return { previousPayments, previousOverduePayments }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousPayments) {
+        queryClient.setQueryData(queryKeys.payments, context.previousPayments)
+      }
+      if (context?.previousOverduePayments) {
+        queryClient.setQueryData(queryKeys.overduePayments, context.previousOverduePayments)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments })
       queryClient.invalidateQueries({ queryKey: queryKeys.overduePayments })
       queryClient.invalidateQueries({ queryKey: queryKeys.customers })
@@ -341,6 +513,15 @@ export function useWeeklyReport() {
     queryKey: queryKeys.weeklyReport,
     queryFn: queries.fetchWeeklyReport,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+export function useWeeklyLeadTrend() {
+  return useQuery({
+    queryKey: queryKeys.weeklyLeadTrend,
+    queryFn: queries.fetchWeeklyLeadTrend,
+    staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true,
   })
 }
