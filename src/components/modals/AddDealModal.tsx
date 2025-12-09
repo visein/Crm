@@ -32,6 +32,7 @@ import { toast } from 'sonner'
 import { CalendarIcon, Plus, X } from 'lucide-react'
 import { addDealSchema, type AddDealFormData } from '@/lib/validation-schemas'
 import type { SatisTakipInsert } from '@/types/database'
+import { SatisDurumu, MailDurumu } from '@/types/database'
 
 interface AddDealModalProps {
   customerId: number
@@ -47,9 +48,9 @@ export function AddDealModal({ customerId, isOpen, onClose }: AddDealModalProps)
     defaultValues: {
       ilgilenilen_hizmet: '',
       talep_tarihi: new Date().toISOString().split('T')[0],
-      satis_durumu: 'Görüşme Aşamasında',
-      mail_1_durumu: 'Gönderilmedi',
-      mail_2_durumu: 'Gönderilmedi'
+      satis_durumu: SatisDurumu.YENI_LEAD,
+      mail_1_durumu: MailDurumu.BEKLIYOR,
+      mail_2_durumu: MailDurumu.BEKLIYOR
     }
   })
 
@@ -152,12 +153,12 @@ export function AddDealModal({ customerId, isOpen, onClose }: AddDealModalProps)
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Yeni Lead">Yeni Lead</SelectItem>
-                      <SelectItem value="Görüşme Aşamasında">Görüşme Aşamasında</SelectItem>
-                      <SelectItem value="Teklif Verildi">Teklif Verildi</SelectItem>
-                      <SelectItem value="Müzakere">Müzakere</SelectItem>
-                      <SelectItem value="Kazanıldı">Kazanıldı</SelectItem>
-                      <SelectItem value="Kaybedildi">Kaybedildi</SelectItem>
+                      <SelectItem value={SatisDurumu.YENI_LEAD}>{SatisDurumu.YENI_LEAD}</SelectItem>
+                      <SelectItem value={SatisDurumu.GORUSULUYOR}>{SatisDurumu.GORUSULUYOR}</SelectItem>
+                      <SelectItem value={SatisDurumu.TEKLIF_ATILDI}>{SatisDurumu.TEKLIF_ATILDI}</SelectItem>
+                      <SelectItem value={SatisDurumu.KAZANILDI}>{SatisDurumu.KAZANILDI}</SelectItem>
+                      <SelectItem value={SatisDurumu.KAYBEDILDI}>{SatisDurumu.KAYBEDILDI}</SelectItem>
+                      <SelectItem value={SatisDurumu.CEVAP_YOK}>{SatisDurumu.CEVAP_YOK}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -178,10 +179,11 @@ export function AddDealModal({ customerId, isOpen, onClose }: AddDealModalProps)
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Gönderilmedi">Gönderilmedi</SelectItem>
-                      <SelectItem value="Gönderildi">Gönderildi</SelectItem>
-                      <SelectItem value="Açıldı">Açıldı</SelectItem>
-                      <SelectItem value="Cevaplandı">Cevaplandı</SelectItem>
+                      <SelectItem value={MailDurumu.BEKLIYOR}>{MailDurumu.BEKLIYOR}</SelectItem>
+                      <SelectItem value={MailDurumu.GONDERILMEDI}>{MailDurumu.GONDERILMEDI}</SelectItem>
+                      <SelectItem value={MailDurumu.GONDERILDI}>{MailDurumu.GONDERILDI}</SelectItem>
+                      <SelectItem value={MailDurumu.ACILDI}>{MailDurumu.ACILDI}</SelectItem>
+                      <SelectItem value={MailDurumu.CEVAPLANDI}>{MailDurumu.CEVAPLANDI}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -202,10 +204,11 @@ export function AddDealModal({ customerId, isOpen, onClose }: AddDealModalProps)
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Gönderilmedi">Gönderilmedi</SelectItem>
-                      <SelectItem value="Gönderildi">Gönderildi</SelectItem>
-                      <SelectItem value="Açıldı">Açıldı</SelectItem>
-                      <SelectItem value="Cevaplandı">Cevaplandı</SelectItem>
+                      <SelectItem value={MailDurumu.BEKLIYOR}>{MailDurumu.BEKLIYOR}</SelectItem>
+                      <SelectItem value={MailDurumu.GONDERILMEDI}>{MailDurumu.GONDERILMEDI}</SelectItem>
+                      <SelectItem value={MailDurumu.GONDERILDI}>{MailDurumu.GONDERILDI}</SelectItem>
+                      <SelectItem value={MailDurumu.ACILDI}>{MailDurumu.ACILDI}</SelectItem>
+                      <SelectItem value={MailDurumu.CEVAPLANDI}>{MailDurumu.CEVAPLANDI}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

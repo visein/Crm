@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SatisDurumu } from '@/types/database'
 
 // Müşteri validation schemas
 export const customerSchema = z.object({
@@ -55,7 +56,7 @@ export const salesRecordSchema = z.object({
   musteri_id: z.number().min(1, 'Müşteri seçimi zorunludur'),
   hizmet_turu: z.string().min(1, 'Hizmet türü zorunludur'),
   tutar: z.number().min(0, 'Tutar 0 veya daha büyük olmalıdır'),
-  durum: z.enum(['Potansiyel', 'Teklif Verildi', 'Görüşme', 'Kazan', 'Kayıp']),
+  durum: z.nativeEnum(SatisDurumu),
   olusturulma_tarihi: z.string().min(1, 'Oluşturulma tarihi zorunludur'),
   notlar: z.string().optional().or(z.literal(''))
 })

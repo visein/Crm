@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useSalesPipeline, usePayments, useOverduePayments } from '@/hooks/useData'
+import { MailDurumu } from '@/types/database'
 import {
   Bot,
   Mail,
@@ -25,22 +26,22 @@ export default function AutomationsPage() {
   const isLoading = salesLoading || paymentsLoading
 
   // Calculate sales follow-up stats
-  const mail1Waiting = salesPipeline?.filter(deal => 
-    deal.mail_1_durumu === 'Bekliyor' && 
+  const mail1Waiting = salesPipeline?.filter(deal =>
+    deal.mail_1_durumu === MailDurumu.BEKLIYOR &&
     !['Kazanıldı', 'Kaybedildi'].includes(deal.satis_durumu)
   ).length || 0
 
-  const mail1Sent = salesPipeline?.filter(deal => 
-    deal.mail_1_durumu !== 'Bekliyor'
+  const mail1Sent = salesPipeline?.filter(deal =>
+    deal.mail_1_durumu !== MailDurumu.BEKLIYOR
   ).length || 0
 
-  const mail2Waiting = salesPipeline?.filter(deal => 
-    deal.mail_2_durumu === 'Bekliyor' && 
+  const mail2Waiting = salesPipeline?.filter(deal =>
+    deal.mail_2_durumu === MailDurumu.BEKLIYOR &&
     !['Kazanıldı', 'Kaybedildi'].includes(deal.satis_durumu)
   ).length || 0
 
-  const mail2Sent = salesPipeline?.filter(deal => 
-    deal.mail_2_durumu !== 'Bekliyor'
+  const mail2Sent = salesPipeline?.filter(deal =>
+    deal.mail_2_durumu !== MailDurumu.BEKLIYOR
   ).length || 0
 
   // Calculate payment reminder stats

@@ -33,6 +33,7 @@ import { toast } from 'sonner'
 import { CalendarIcon, Edit, Save, X } from 'lucide-react'
 import { editDealSchema, type EditDealFormData } from '@/lib/validation-schemas'
 import type { SatisTakip } from '@/types/database'
+import { SatisDurumu, MailDurumu } from '@/types/database'
 
 interface EditDealModalProps {
   deal: SatisTakip | null
@@ -198,12 +199,12 @@ export function EditDealModal({ deal, isOpen, onClose }: EditDealModalProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Yeni Lead">Yeni Lead</SelectItem>
-                      <SelectItem value="Görüşme Aşamasında">Görüşme Aşamasında</SelectItem>
-                      <SelectItem value="Teklif Verildi">Teklif Verildi</SelectItem>
-                      <SelectItem value="Müzakere">Müzakere</SelectItem>
-                      <SelectItem value="Kazanıldı">Kazanıldı</SelectItem>
-                      <SelectItem value="Kaybedildi">Kaybedildi</SelectItem>
+                      <SelectItem value={SatisDurumu.YENI_LEAD}>{SatisDurumu.YENI_LEAD}</SelectItem>
+                      <SelectItem value={SatisDurumu.GORUSULUYOR}>{SatisDurumu.GORUSULUYOR}</SelectItem>
+                      <SelectItem value={SatisDurumu.TEKLIF_ATILDI}>{SatisDurumu.TEKLIF_ATILDI}</SelectItem>
+                      <SelectItem value={SatisDurumu.KAZANILDI}>{SatisDurumu.KAZANILDI}</SelectItem>
+                      <SelectItem value={SatisDurumu.KAYBEDILDI}>{SatisDurumu.KAYBEDILDI}</SelectItem>
+                      <SelectItem value={SatisDurumu.CEVAP_YOK}>{SatisDurumu.CEVAP_YOK}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -225,10 +226,11 @@ export function EditDealModal({ deal, isOpen, onClose }: EditDealModalProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Gönderilmedi">Gönderilmedi</SelectItem>
-                        <SelectItem value="Gönderildi">Gönderildi</SelectItem>
-                        <SelectItem value="Açıldı">Açıldı</SelectItem>
-                        <SelectItem value="Cevaplandı">Cevaplandı</SelectItem>
+                        <SelectItem value={MailDurumu.BEKLIYOR}>{MailDurumu.BEKLIYOR}</SelectItem>
+                        <SelectItem value={MailDurumu.GONDERILMEDI}>{MailDurumu.GONDERILMEDI}</SelectItem>
+                        <SelectItem value={MailDurumu.GONDERILDI}>{MailDurumu.GONDERILDI}</SelectItem>
+                        <SelectItem value={MailDurumu.ACILDI}>{MailDurumu.ACILDI}</SelectItem>
+                        <SelectItem value={MailDurumu.CEVAPLANDI}>{MailDurumu.CEVAPLANDI}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -268,10 +270,11 @@ export function EditDealModal({ deal, isOpen, onClose }: EditDealModalProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Gönderilmedi">Gönderilmedi</SelectItem>
-                        <SelectItem value="Gönderildi">Gönderildi</SelectItem>
-                        <SelectItem value="Açıldı">Açıldı</SelectItem>
-                        <SelectItem value="Cevaplandı">Cevaplandı</SelectItem>
+                        <SelectItem value={MailDurumu.BEKLIYOR}>{MailDurumu.BEKLIYOR}</SelectItem>
+                        <SelectItem value={MailDurumu.GONDERILMEDI}>{MailDurumu.GONDERILMEDI}</SelectItem>
+                        <SelectItem value={MailDurumu.GONDERILDI}>{MailDurumu.GONDERILDI}</SelectItem>
+                        <SelectItem value={MailDurumu.ACILDI}>{MailDurumu.ACILDI}</SelectItem>
+                        <SelectItem value={MailDurumu.CEVAPLANDI}>{MailDurumu.CEVAPLANDI}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -297,7 +300,7 @@ export function EditDealModal({ deal, isOpen, onClose }: EditDealModalProps) {
               />
             </div>
 
-            {salesStatus === 'Kazanıldı' && (
+            {salesStatus === SatisDurumu.KAZANILDI && (
               <FormField
                 control={form.control}
                 name="kazanilma_tarihi"

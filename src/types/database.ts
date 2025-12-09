@@ -269,11 +269,19 @@ export type OperasyonDetayInsert = Database['public']['Tables']['operasyon_detay
 // Enum values as constants
 export const SatisDurumu = {
   YENI_LEAD: 'Yeni Lead',
-  GORUSULUYOR: 'Görüşülüyor', 
+  GORUSULUYOR: 'Görüşülüyor',
   TEKLIF_ATILDI: 'Teklif Atıldı',
   KAZANILDI: 'Kazanıldı',
   KAYBEDILDI: 'Kaybedildi',
   CEVAP_YOK: 'Cevap Yok'
+} as const
+
+export const MailDurumu = {
+  BEKLIYOR: 'Bekliyor',
+  GONDERILMEDI: 'Gönderilmedi',
+  GONDERILDI: 'Gönderildi',
+  ACILDI: 'Açıldı',
+  CEVAPLANDI: 'Cevaplandı'
 } as const
 
 export const OdemeDurumu = {

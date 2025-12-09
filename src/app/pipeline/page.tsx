@@ -108,8 +108,6 @@ function DealCard({
     transition,
   }
 
-  // Debug log to check if isExpanded prop is working
-  console.log('DealCard render:', { dealId: deal.id, isExpanded, density })
 
   // Simplified approach - no priority calculations for now
   const isOld = false
@@ -158,12 +156,8 @@ function DealCard({
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                console.log('🔵 Expand button clicked! Deal ID:', deal.id, 'Current isExpanded:', isExpanded)
                 if (onToggleExpand) {
                   onToggleExpand()
-                  console.log('🔵 onToggleExpand called!')
-                } else {
-                  console.log('❌ onToggleExpand is undefined!')
                 }
               }}
               onPointerDown={(e) => {
@@ -205,7 +199,6 @@ function DealCard({
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                console.log('Card body clicked for expand')
                 onToggleExpand?.()
               }}
             >
@@ -466,18 +459,14 @@ export default function PipelinePage() {
 
   // Toggle card expansion with debug logging
   const toggleCardExpand = useCallback((dealId: number) => {
-    console.log('🟢 toggleCardExpand called for deal:', dealId)
     setExpandedCards(prev => {
       const newSet = new Set(prev)
       const wasExpanded = newSet.has(dealId)
       if (wasExpanded) {
         newSet.delete(dealId)
-        console.log('🟢 Card collapsed:', dealId)
       } else {
         newSet.add(dealId)
-        console.log('🟢 Card expanded:', dealId)
       }
-      console.log('🟢 New expanded cards set:', Array.from(newSet))
       return newSet
     })
   }, [])
@@ -546,19 +535,13 @@ export default function PipelinePage() {
 
     if (!newStatus) return
 
-    console.log('Updating deal:', { dealId, newStatus }) // Debug log
 
     try {
       await updateSalesStatus.mutateAsync({ id: dealId, status: newStatus })
       toast.success('Satış durumu güncellendi!')
     } catch (error) {
-      console.error('Full error object:', error) // Better error logging
-      if (error instanceof Error) {
-        console.error('Error message:', error.message)
-        console.error('Error stack:', error.stack)
-      }
       handleAsyncError(error, 'Pipeline-UpdateStatus')
-      toast.error('Satış durumu güncellenemedi: ' + (error instanceof Error ? error.message : String(error)))
+      toast.error('Satış durumu güncellenemedi')
     }
   }, [updateSalesStatus])
 
