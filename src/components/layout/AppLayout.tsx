@@ -9,7 +9,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, role, fullName, signOut, switchRole } = useAuth()
+  const { user, role, fullName, signOut } = useAuth()
 
   if (!user) {
     return null // Let individual pages handle auth redirects
@@ -34,7 +34,6 @@ export function AppLayout({ children }: AppLayoutProps) {
           userName={fullName}
           userRole={role}
           onSignOut={signOut}
-          onRoleSwitch={switchRole}
           onSearch={handleSearch}
         />
         

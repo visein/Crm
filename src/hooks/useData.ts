@@ -2,7 +2,16 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as queries from '@/lib/queries'
-import type { Musteri, Sozlesme } from '@/types/database'
+import type { Musteri, Sozlesme, SatisTakip } from '@/types/database'
+
+// Pipeline deal type with customer info
+type PipelineDeal = SatisTakip & {
+  musteriler?: {
+    ad_soyad: string
+    sirket_adi?: string | null
+    telefon?: string | null
+  } | null
+}
 
 // Query keys
 export const queryKeys = {
@@ -152,7 +161,42 @@ export function useUpdateSalesStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
       queries.updateSalesStatus(id, status),
-    onSuccess: () => {
+    onMutate: async ({ id, status }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: queryKeys.salesPipeline })
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(queryKeys.salesPipeline)
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(queryKeys.salesPipeline, (oldData: PipelineDeal[] | undefined) => {
+        if (!oldData) return oldData
+        
+        return oldData.map((deal: PipelineDeal) => {
+          if (deal.id === id) {
+            return {
+              ...deal,
+              satis_durumu: status,
+              ...(status === 'Kazanıldı' && {
+                kazanilma_tarihi: new Date().toISOString().split('T')[0]
+              })
+            }
+          }
+          return deal
+        })
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousData }
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousData) {
+        queryClient.setQueryData(queryKeys.salesPipeline, context.previousData)
+      }
+    },
+    onSettled: () => {
+      // Always refetch after error or success to make sure our data is correct
       queryClient.invalidateQueries({ queryKey: queryKeys.salesPipeline })
       queryClient.invalidateQueries({ queryKey: queryKeys.customers })
     },

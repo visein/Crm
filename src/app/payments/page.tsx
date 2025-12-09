@@ -23,7 +23,7 @@ import {
 import { usePayments, useOverduePayments, useUpdatePaymentStatus } from '@/hooks/useData'
 import { formatDate, formatCurrency, getDaysUntil } from '@/lib/utils'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import { AddPaymentModal } from '@/components/modals/AddPaymentModal'
 import {
   Search,
@@ -112,10 +112,10 @@ export default function PaymentsPage() {
   const handleStatusUpdate = async (paymentId: number, newStatus: string) => {
     try {
       await updatePaymentStatus.mutateAsync({ id: paymentId, status: newStatus })
-      showToast('Ödeme durumu güncellendi!', 'success')
+      toast.success('Ödeme durumu güncellendi!')
     } catch (error) {
       handleAsyncError(error, 'Payments-UpdateStatus')
-      showToast('Ödeme durumu güncellenirken hata oluştu', 'error')
+      toast.error('Ödeme durumu güncellenirken hata oluştu')
     }
   }
 

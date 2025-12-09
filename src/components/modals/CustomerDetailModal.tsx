@@ -33,7 +33,7 @@ import {
 } from '@/hooks/useData'
 import { formatDate, formatCurrency, formatRelativeTime } from '@/lib/utils'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import {
   User,
   Building,
@@ -87,10 +87,10 @@ export function CustomerDetailModal({ customerId, isOpen, onClose }: CustomerDet
           updates: editForm
         })
         setIsEditing(false)
-        showToast('Müşteri bilgileri güncellendi!', 'success')
+        toast.success('Müşteri bilgileri güncellendi!')
       } catch (error) {
         handleAsyncError(error, 'CustomerDetail-SaveCustomer')
-        showToast('Müşteri bilgileri güncellenemedi!', 'error')
+        toast.error('Müşteri bilgileri güncellenemedi!')
       }
     }
   }
@@ -108,6 +108,15 @@ export function CustomerDetailModal({ customerId, isOpen, onClose }: CustomerDet
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <User className="h-5 w-5" />
+              Müşteri Detayları
+            </DialogTitle>
+            <DialogDescription>
+              Müşteri bilgileri yükleniyor...
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <div className="text-gray-500">Yükleniyor...</div>
           </div>
@@ -120,6 +129,15 @@ export function CustomerDetailModal({ customerId, isOpen, onClose }: CustomerDet
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <User className="h-5 w-5" />
+              Müşteri Detayları
+            </DialogTitle>
+            <DialogDescription>
+              Müşteri bilgilerine erişilemiyor
+            </DialogDescription>
+          </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <div className="text-red-500">Müşteri bulunamadı</div>
           </div>

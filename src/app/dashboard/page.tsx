@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useWeeklyReport, useSalesPipeline, useOverduePayments, useExpiringContracts } from '@/hooks/useData'
 import { formatTurkishCurrency, getRelativeTime } from '@/lib/utils'
-import { AlertTriangle, TrendingUp, Users, MessageSquare, CreditCard, FileText } from 'lucide-react'
+import { toast } from 'sonner'
+import { AlertTriangle, TrendingUp, Users, MessageSquare, CreditCard, FileText, Download } from 'lucide-react'
 
 // Type definitions for processed data
 interface PaymentWithCustomer {
@@ -37,6 +38,62 @@ interface SalesPipelineWithCustomer {
   musteriler?: {
     ad_soyad: string
   } | null
+}
+
+interface WeeklyReport {
+  yeni_lead_sayisi?: number | null
+  ai_mesaj_sayisi?: number | null
+  kazanilan_dakika?: number | null
+  kapanan_satislar?: number | null
+  toplanan_tutar?: number | null
+}
+
+// Export dashboard report as CSV
+const exportDashboardReport = (
+  weeklyReport: WeeklyReport | undefined,
+  overduePayments: PaymentWithCustomer[],
+  expiringContracts: ContractWithCustomer[]
+) => {
+  const csvContent = [
+    ['Turkish CRM - Dashboard Raporu'],
+    ['Tarih:', new Date().toLocaleDateString('tr-TR')],
+    [''],
+    ['Haftalık Özet Metrikleri'],
+    ['Yeni Leadler:', weeklyReport?.yeni_lead_sayisi || 0],
+    ['AI Mesajları:', weeklyReport?.ai_mesaj_sayisi || 0],
+    ['Kazanılan Dakika:', weeklyReport?.kazanilan_dakika || 0],
+    ['Kapanan Satışlar:', weeklyReport?.kapanan_satislar || 0],
+    ['Toplanan Tutar:', formatTurkishCurrency(weeklyReport?.toplanan_tutar || 0)],
+    [''],
+    ['Geciken Ödemeler'],
+    ['Müşteri', 'Açıklama', 'Tutar', 'Vade Tarihi'],
+    ...overduePayments?.slice(0, 10).map(payment => [
+      payment.musteriler?.ad_soyad || '',
+      payment.aciklama || '',
+      formatTurkishCurrency(payment.tutar || 0),
+      payment.vade_tarihi || ''
+    ]) || [],
+    [''],
+    ['Yaklaşan Sözleşme Bitimleri'],
+    ['Müşteri', 'Hizmet Tipi', 'Bitiş Tarihi', 'Tutar'],
+    ...expiringContracts?.slice(0, 10).map(contract => [
+      contract.musteriler?.ad_soyad || '',
+      contract.hizmet_tipi || '',
+      contract.bitis_tarihi || '',
+      formatTurkishCurrency(contract.sozlesme_bedeli || 0)
+    ]) || []
+  ]
+
+  const csvString = csvContent.map(row =>
+    Array.isArray(row) ? row.join(',') : row
+  ).join('\n')
+
+  const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `dashboard-raporu-${new Date().toISOString().split('T')[0]}.csv`
+  link.click()
+  URL.revokeObjectURL(link.href)
 }
 
 export default function DashboardPage() {
@@ -90,8 +147,18 @@ export default function DashboardPage() {
             Son 7 günlük performans özeti ve önemli uyarılar
           </p>
         </div>
-        <Button variant="outline">
-          <TrendingUp className="mr-2 h-4 w-4" />
+        <Button
+          variant="outline"
+          onClick={() => {
+            try {
+              exportDashboardReport(weeklyReport, overduePayments || [], expiringContracts || [])
+              toast.success('Dashboard raporu indirildi!')
+            } catch {
+              toast.error('Rapor indirirken hata oluştu')
+            }
+          }}
+        >
+          <Download className="mr-2 h-4 w-4" />
           Rapor İndir
         </Button>
       </div>

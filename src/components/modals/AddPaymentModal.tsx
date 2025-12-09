@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { useCustomers, useContracts, useCreatePayment } from '@/hooks/useData'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import { Plus, Save, X, Search } from 'lucide-react'
 import type { OdemeInsert, Musteri, Sozlesme } from '@/types/database'
 
@@ -71,22 +71,22 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
     e.preventDefault()
     
     if (!formData.musteri_id) {
-      showToast('Müşteri seçimi zorunludur', 'warning')
+      toast.warning('Müşteri seçimi zorunludur')
       return
     }
 
     if (!formData.tutar || formData.tutar <= 0) {
-      showToast('Geçerli bir tutar girmelisiniz', 'warning')
+      toast.warning('Geçerli bir tutar girmelisiniz')
       return
     }
 
     if (!formData.vade_tarihi) {
-      showToast('Vade tarihi zorunludur', 'warning')
+      toast.warning('Vade tarihi zorunludur')
       return
     }
 
     if (!formData.aciklama) {
-      showToast('Açıklama zorunludur', 'warning')
+      toast.warning('Açıklama zorunludur')
       return
     }
 
@@ -118,11 +118,11 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
       setCustomerSearch('')
       setSelectedCustomer(null)
       
-      showToast('Ödeme başarıyla eklendi!', 'success')
+      toast.success('Ödeme başarıyla eklendi!')
       onClose()
     } catch (error) {
       handleAsyncError(error, 'AddPayment-Submit')
-      showToast('Ödeme eklenirken hata oluştu', 'error')
+      toast.error('Ödeme eklenirken hata oluştu')
     }
   }
 
@@ -151,21 +151,23 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
   }
 
   const handleContractSelect = (contractId: string) => {
-    const contract = customerContracts.find(c => c.id.toString() === contractId)
-    if (contract) {
-      setFormData(prev => ({ 
-        ...prev, 
-        sozlesme_id: contract.id,
-        tutar: contract.sozlesme_bedeli || 0,
-        aciklama: `${contract.hizmet_tipi} - ${new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })} dönemi`
-      }))
-    } else {
-      setFormData(prev => ({ 
-        ...prev, 
+    if (contractId === 'none') {
+      setFormData(prev => ({
+        ...prev,
         sozlesme_id: undefined,
         tutar: 0,
         aciklama: ''
       }))
+    } else {
+      const contract = customerContracts.find(c => c.id.toString() === contractId)
+      if (contract) {
+        setFormData(prev => ({
+          ...prev,
+          sozlesme_id: contract.id,
+          tutar: contract.sozlesme_bedeli || 0,
+          aciklama: `${contract.hizmet_tipi} - ${new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })} dönemi`
+        }))
+      }
     }
   }
 
@@ -236,7 +238,7 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
                     <SelectValue placeholder="Sözleşme seçin (otomatik tutar ve açıklama)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sözleşme Seçilmedi</SelectItem>
+                    <SelectItem value="none">Sözleşme Seçilmedi</SelectItem>
                     {customerContracts.map((contract: ContractWithCustomer) => (
                       <SelectItem key={contract.id} value={contract.id.toString()}>
                         {contract.hizmet_tipi} - {contract.sozlesme_bedeli ? `${contract.sozlesme_bedeli} TL` : 'Tutar Belirtilmemiş'} ({contract.odeme_periyodu})

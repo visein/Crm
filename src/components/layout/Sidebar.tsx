@@ -34,43 +34,43 @@ const navigationItems = [
     href: '/customers',
     label: TEXTS.nav.customers,
     icon: Users,
-    key: 'musteriler'
+    key: 'customers'
   },
   {
     href: '/pipeline',
     label: TEXTS.nav.sales,
     icon: Target,
-    key: 'satis'
+    key: 'pipeline'
   },
   {
     href: '/contracts',
     label: TEXTS.nav.contracts,
     icon: FileText,
-    key: 'sozlesmeler'
+    key: 'contracts'
   },
   {
     href: '/payments',
     label: TEXTS.nav.payments,
     icon: CreditCard,
-    key: 'odemeler'
+    key: 'payments'
   },
   {
     href: '/interactions',
     label: TEXTS.nav.interactions,
     icon: MessageSquare,
-    key: 'mesajlar'
+    key: 'interactions'
   },
   {
     href: '/operations',
     label: TEXTS.nav.operations,
     icon: Settings,
-    key: 'operasyon'
+    key: 'operations'
   },
   {
     href: '/automations',
     label: TEXTS.nav.automations,
     icon: Bot,
-    key: 'otomasyon'
+    key: 'automations'
   },
 ]
 

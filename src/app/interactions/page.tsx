@@ -240,15 +240,15 @@ export default function InteractionsPage() {
               </SelectContent>
             </Select>
 
-            <Select 
-              value={selectedCustomerId?.toString() || ''} 
-              onValueChange={(value) => setSelectedCustomerId(value ? parseInt(value) : null)}
+            <Select
+              value={selectedCustomerId?.toString() || 'all'}
+              onValueChange={(value) => setSelectedCustomerId(value === 'all' ? null : parseInt(value))}
             >
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Müşteri" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tüm Müşteriler</SelectItem>
+                <SelectItem value="all">Tüm Müşteriler</SelectItem>
                 {customers?.map((customer: Musteri) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
                     {customer.ad_soyad}

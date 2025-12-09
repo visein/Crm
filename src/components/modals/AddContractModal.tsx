@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select'
 import { useCustomers, useCreateContract } from '@/hooks/useData'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import { Plus, Save, X, Search } from 'lucide-react'
 import type { SozlesmeInsert, Musteri } from '@/types/database'
 
@@ -54,17 +54,17 @@ export function AddContractModal({ isOpen, onClose }: AddContractModalProps) {
     e.preventDefault()
     
     if (!formData.musteri_id) {
-      showToast('Müşteri seçimi zorunludur', 'warning')
+      toast.warning('Müşteri seçimi zorunludur')
       return
     }
 
     if (!formData.hizmet_tipi) {
-      showToast('Hizmet türü zorunludur', 'warning')
+      toast.warning('Hizmet türü zorunludur')
       return
     }
 
     if (!formData.baslangic_tarihi) {
-      showToast('Başlangıç tarihi zorunludur', 'warning')
+      toast.warning('Başlangıç tarihi zorunludur')
       return
     }
 
@@ -91,11 +91,11 @@ export function AddContractModal({ isOpen, onClose }: AddContractModalProps) {
       })
       setCustomerSearch('')
       
-      showToast('Sözleşme başarıyla eklendi!', 'success')
+      toast.success('Sözleşme başarıyla eklendi!')
       onClose()
     } catch (error) {
       handleAsyncError(error, 'AddContract-Submit')
-      showToast('Sözleşme eklenirken hata oluştu', 'error')
+      toast.error('Sözleşme eklenirken hata oluştu')
     }
   }
 

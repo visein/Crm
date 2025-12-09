@@ -152,10 +152,10 @@ export const TEXTS = {
 
 // Role permissions
 export const ROLE_PERMISSIONS = {
-  admin: ['dashboard', 'musteriler', 'satis', 'sozlesmeler', 'odemeler', 'mesajlar', 'operasyon', 'otomasyon'],
-  sales: ['dashboard', 'musteriler', 'satis', 'mesajlar'],
-  finance: ['dashboard', 'sozlesmeler', 'odemeler'],
-  operations: ['dashboard', 'musteriler', 'operasyon'],
+  admin: ['dashboard', 'customers', 'pipeline', 'contracts', 'payments', 'interactions', 'operations', 'automations'],
+  sales: ['dashboard', 'customers', 'pipeline', 'interactions'],
+  finance: ['dashboard', 'contracts', 'payments'],
+  operations: ['dashboard', 'customers', 'operations'],
 } as const
 
 // Color schemes for charts and status badges

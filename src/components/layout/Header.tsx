@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, User, ChevronDown, LogOut } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, User, ChevronDown, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,9 +12,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -24,7 +22,6 @@ interface HeaderProps {
   userName: string
   userRole: UserRole
   onSignOut: () => void
-  onRoleSwitch: (role: UserRole) => void
   onSearch?: (query: string) => void
   className?: string
 }
@@ -40,11 +37,11 @@ export function Header({
   userName,
   userRole,
   onSignOut,
-  onRoleSwitch,
   onSearch,
   className
 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const router = useRouter()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,45 +92,15 @@ export function Header({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             
-            {/* Demo Role Switch */}
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <User className="mr-2 h-4 w-4" />
-                <span>Demo: Rol Değiştir</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem 
-                  onClick={() => onRoleSwitch('admin')}
-                  disabled={userRole === 'admin'}
-                >
-                  <span className="mr-2">👑</span>
-                  {TEXTS.roles.admin}
+            {userRole === 'admin' && (
+              <>
+                <DropdownMenuItem onClick={() => router.push('/admin')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Kullanıcı Yönetimi</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onRoleSwitch('sales')}
-                  disabled={userRole === 'sales'}
-                >
-                  <span className="mr-2">🎯</span>
-                  {TEXTS.roles.sales}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onRoleSwitch('finance')}
-                  disabled={userRole === 'finance'}
-                >
-                  <span className="mr-2">💰</span>
-                  {TEXTS.roles.finance}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onRoleSwitch('operations')}
-                  disabled={userRole === 'operations'}
-                >
-                  <span className="mr-2">🔧</span>
-                  {TEXTS.roles.operations}
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            
-            <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={onSignOut} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Çıkış Yap</span>

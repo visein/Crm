@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { useCreateCustomer } from '@/hooks/useData'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import { Plus, Save, X } from 'lucide-react'
 import type { MusteriInsert } from '@/types/database'
 
@@ -47,7 +47,7 @@ export function AddCustomerModal({ isOpen, onClose }: AddCustomerModalProps) {
     e.preventDefault()
     
     if (!formData.ad_soyad) {
-      showToast('Ad soyad alanı zorunludur', 'warning')
+      toast.warning('Ad soyad alanı zorunludur')
       return
     }
 
@@ -75,11 +75,11 @@ export function AddCustomerModal({ isOpen, onClose }: AddCustomerModalProps) {
         notlar: ''
       })
       
-      showToast('Müşteri başarıyla eklendi!', 'success')
+      toast.success('Müşteri başarıyla eklendi!')
       onClose()
     } catch (error) {
       handleAsyncError(error, 'AddCustomer-Submit')
-      showToast('Müşteri eklenirken hata oluştu', 'error')
+      toast.error('Müşteri eklenirken hata oluştu')
     }
   }
 

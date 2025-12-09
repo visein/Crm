@@ -32,7 +32,7 @@ import {
 import { useSalesPipeline, useUpdateSalesStatus } from '@/hooks/useData'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import {
   Search,
   Filter,
@@ -278,7 +278,7 @@ export default function PipelinePage() {
 
     try {
       await updateSalesStatus.mutateAsync({ id: dealId, status: newStatus })
-      showToast('Satış durumu güncellendi!', 'success')
+      toast.success('Satış durumu güncellendi!')
     } catch (error) {
       console.error('Full error object:', error) // Better error logging
       if (error instanceof Error) {
@@ -286,7 +286,7 @@ export default function PipelinePage() {
         console.error('Error stack:', error.stack)
       }
       handleAsyncError(error, 'Pipeline-UpdateStatus')
-      showToast('Satış durumu güncellenemedi: ' + (error instanceof Error ? error.message : String(error)), 'error')
+      toast.error('Satış durumu güncellenemedi: ' + (error instanceof Error ? error.message : String(error)))
     }
   }, [updateSalesStatus])
 

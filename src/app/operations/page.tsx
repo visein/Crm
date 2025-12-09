@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dialog'
 import { useCustomersWithOperations, useUpsertOperationDetails } from '@/hooks/useData'
 import { handleAsyncError } from '@/lib/error-handler'
-import { showToast } from '@/lib/toast'
+import { toast } from 'sonner'
 import {
   Search,
   Settings,
@@ -122,10 +122,10 @@ export default function OperationsPage() {
       await upsertOperationsMutation.mutateAsync(operationData)
       setIsModalOpen(false)
       setSelectedCustomer(null)
-      showToast('Operasyon detayları kaydedildi!', 'success')
+      toast.success('Operasyon detayları kaydedildi!')
     } catch (error) {
       handleAsyncError(error, 'Operations-SaveDetails')
-      showToast('Operasyon detayları kaydedilemedi!', 'error')
+      toast.error('Operasyon detayları kaydedilemedi!')
     }
   }
 

@@ -69,7 +69,67 @@ class ErrorHandler {
 
   handleAsyncError = (error: unknown, context: string): void => {
     if (error instanceof Error) {
-      this.logError(error, context)
+      this.logError(error, context, {
+        stack: error.stack,
+        name: error.name
+      })
+    } else if (typeof error === 'object' && error !== null) {
+      // Handle Supabase specific error format
+      if ('message' in error && typeof (error as Record<string, unknown>).message === 'string') {
+        const supabaseError = error as {
+          message: string
+          details?: string
+          hint?: string
+          code?: string
+        }
+        
+        this.logError(supabaseError.message, context, {
+          details: supabaseError.details,
+          hint: supabaseError.hint,
+          code: supabaseError.code,
+          errorType: 'Supabase Error'
+        })
+        return
+      }
+
+      // Try to safely serialize the error object
+      try {
+        // Custom replacer to avoid circular references
+        const errorMessage = JSON.stringify(error, (key, value: unknown) => {
+          if (value === error) return '[Circular]'
+          if (typeof value === 'function') return '[Function]'
+          if (typeof value === 'object' && value !== null) {
+            // Only include basic properties
+            const safeObj: Record<string, string | number | boolean> = {}
+            const errorObj = value as Record<string, unknown>
+            for (const prop of ['message', 'code', 'details', 'hint', 'status']) {
+              if (prop in errorObj && typeof errorObj[prop] !== 'function') {
+                const propValue = errorObj[prop]
+                if (typeof propValue === 'string' || typeof propValue === 'number' || typeof propValue === 'boolean') {
+                  safeObj[prop] = propValue
+                }
+              }
+            }
+            return Object.keys(safeObj).length > 0 ? safeObj : '[Object]'
+          }
+          return value
+        }, 2)
+        
+        this.logError(errorMessage, context)
+      } catch {
+        // Extract meaningful information without serialization
+        const errorObj = error as Record<string, unknown>
+        const errorInfo = {
+          type: error.constructor?.name || 'Unknown',
+          hasMessage: 'message' in error,
+          hasCode: 'code' in error,
+          hasDetails: 'details' in error,
+          keys: Object.keys(error).slice(0, 10) // First 10 keys only
+        }
+        
+        const errorMessage = typeof errorObj.message === 'string' ? errorObj.message : '[No message]'
+        this.logError(`Error serialization failed: ${errorMessage}`, context, errorInfo)
+      }
     } else {
       this.logError(String(error), context)
     }
