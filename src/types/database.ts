@@ -13,7 +13,7 @@ export interface Database {
         Row: {
           id: number
           created_at: string
-          ad_soyad: string
+          ad_soyad: string | null
           telefon: string | null
           email: string | null
           sirket_adi: string | null
@@ -22,11 +22,12 @@ export interface Database {
           dogum_tarihi: string | null
           notlar: string | null
           whatsapp_raw_id: string | null
+          ad_soruldu_mu: boolean
         }
         Insert: {
           id?: number
           created_at?: string
-          ad_soyad: string
+          ad_soyad?: string | null
           telefon?: string | null
           email?: string | null
           sirket_adi?: string | null
@@ -35,11 +36,12 @@ export interface Database {
           dogum_tarihi?: string | null
           notlar?: string | null
           whatsapp_raw_id?: string | null
+          ad_soruldu_mu?: boolean
         }
         Update: {
           id?: number
           created_at?: string
-          ad_soyad?: string
+          ad_soyad?: string | null
           telefon?: string | null
           email?: string | null
           sirket_adi?: string | null
@@ -48,6 +50,7 @@ export interface Database {
           dogum_tarihi?: string | null
           notlar?: string | null
           whatsapp_raw_id?: string | null
+          ad_soruldu_mu?: boolean
         }
       }
       satis_takip: {

@@ -32,7 +32,7 @@ interface AddPaymentModalProps {
 
 type ContractWithCustomer = Sozlesme & {
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
     sirket_adi?: string | null
   } | null
 }
@@ -58,7 +58,7 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
 
   // Filter customers for selection
   const filteredCustomers = customers?.filter((customer: Musteri) =>
-    customer.ad_soyad.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.ad_soyad?.toLowerCase().includes(customerSearch.toLowerCase()) ||
     customer.sirket_adi?.toLowerCase().includes(customerSearch.toLowerCase())
   ) || []
 
@@ -147,7 +147,7 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
   const handleCustomerSelect = (customer: Musteri) => {
     setSelectedCustomer(customer)
     setFormData(prev => ({ ...prev, musteri_id: customer.id, sozlesme_id: undefined }))
-    setCustomerSearch(`${customer.ad_soyad}${customer.sirket_adi ? ` (${customer.sirket_adi})` : ''}`)
+    setCustomerSearch(`${customer.ad_soyad || 'İsimsiz Müşteri'}${customer.sirket_adi ? ` (${customer.sirket_adi})` : ''}`)
   }
 
   const handleContractSelect = (contractId: string) => {
@@ -215,7 +215,7 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
                         className="w-full text-left p-2 hover:bg-gray-50 border-b last:border-b-0"
                         onClick={() => handleCustomerSelect(customer)}
                       >
-                        <div className="font-medium">{customer.ad_soyad}</div>
+                        <div className="font-medium">{customer.ad_soyad || 'İsimsiz Müşteri'}</div>
                         {customer.sirket_adi && (
                           <div className="text-sm text-gray-600">{customer.sirket_adi}</div>
                         )}

@@ -46,7 +46,7 @@ export function AddContractModal({ isOpen, onClose }: AddContractModalProps) {
 
   // Filter customers for selection
   const filteredCustomers = customers?.filter((customer: Musteri) =>
-    customer.ad_soyad.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.ad_soyad?.toLowerCase().includes(customerSearch.toLowerCase()) ||
     customer.sirket_adi?.toLowerCase().includes(customerSearch.toLowerCase())
   ) || []
 
@@ -195,10 +195,10 @@ export function AddContractModal({ isOpen, onClose }: AddContractModalProps) {
                         className="w-full text-left p-2 hover:bg-gray-50 border-b last:border-b-0"
                         onClick={() => {
                           setFormData(prev => ({ ...prev, musteri_id: customer.id }))
-                          setCustomerSearch(`${customer.ad_soyad}${customer.sirket_adi ? ` (${customer.sirket_adi})` : ''}`)
+                          setCustomerSearch(`${customer.ad_soyad || 'İsimsiz Müşteri'}${customer.sirket_adi ? ` (${customer.sirket_adi})` : ''}`)
                         }}
                       >
-                        <div className="font-medium">{customer.ad_soyad}</div>
+                        <div className="font-medium">{customer.ad_soyad || 'İsimsiz Müşteri'}</div>
                         {customer.sirket_adi && (
                           <div className="text-sm text-gray-600">{customer.sirket_adi}</div>
                         )}
