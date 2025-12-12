@@ -44,7 +44,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 // Extended type for contracts with customer info
 type ContractWithCustomer = Sozlesme & {
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
     sirket_adi?: string | null
   } | null
 }
@@ -315,7 +315,7 @@ export default function ContractsPage() {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium">{contract.musteriler?.ad_soyad}</span>
+                            <span className="font-medium">{contract.musteriler?.ad_soyad || 'İsimsiz Müşteri'}</span>
                           </div>
                           {contract.musteriler?.sirket_adi && (
                             <div className="flex items-center gap-2">

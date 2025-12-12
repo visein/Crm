@@ -125,7 +125,7 @@ export async function updateSalesRecord(
 }
 
 // Contract queries
-export async function fetchContracts() {
+export async function fetchContracts(): Promise<(Sozlesme & { musteriler: { ad_soyad: string | null; sirket_adi?: string | null } | null })[]> {
   const { data, error } = await supabase
     .from('sozlesmeler')
     .select(`
@@ -135,7 +135,7 @@ export async function fetchContracts() {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return data || []
+  return (data || []) as (Sozlesme & { musteriler: { ad_soyad: string | null; sirket_adi?: string | null } | null })[]
 }
 
 // Payment queries

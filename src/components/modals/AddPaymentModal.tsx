@@ -23,19 +23,13 @@ import { useCustomers, useContracts, useCreatePayment } from '@/hooks/useData'
 import { handleAsyncError } from '@/lib/error-handler'
 import { toast } from 'sonner'
 import { Plus, Save, X, Search } from 'lucide-react'
-import type { OdemeInsert, Musteri, Sozlesme } from '@/types/database'
+import type { OdemeInsert, Musteri } from '@/types/database'
 
 interface AddPaymentModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-type ContractWithCustomer = Sozlesme & {
-  musteriler?: {
-    ad_soyad: string | null
-    sirket_adi?: string | null
-  } | null
-}
 
 export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
   const [formData, setFormData] = useState<Partial<OdemeInsert>>({
@@ -63,7 +57,7 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
   ) || []
 
   // Filter contracts for selected customer
-  const customerContracts = contracts?.filter((contract: ContractWithCustomer) => 
+  const customerContracts = contracts?.filter((contract) =>
     contract.musteri_id === selectedCustomer?.id && contract.aktif_mi
   ) || []
 
@@ -239,7 +233,7 @@ export function AddPaymentModal({ isOpen, onClose }: AddPaymentModalProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sözleşme Seçilmedi</SelectItem>
-                    {customerContracts.map((contract: ContractWithCustomer) => (
+                    {customerContracts.map((contract) => (
                       <SelectItem key={contract.id} value={contract.id.toString()}>
                         {contract.hizmet_tipi} - {contract.sozlesme_bedeli ? `${contract.sozlesme_bedeli} TL` : 'Tutar Belirtilmemiş'} ({contract.odeme_periyodu})
                       </SelectItem>
