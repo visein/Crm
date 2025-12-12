@@ -13,6 +13,7 @@ import type {
   OdemeInsert,
   OperasyonDetayInsert
 } from '@/types/database'
+import { normalizePhoneNumber } from './normalizePhoneNumber'
 
 // Customer queries
 export async function fetchCustomers(): Promise<Musteri[]> {
@@ -232,9 +233,21 @@ export async function searchCustomers(query: string): Promise<Musteri[]> {
 
 // Create customer
 export async function createCustomer(customer: MusteriInsert) {
+  const normalizedTelefon =
+    customer.telefon && customer.telefon.trim() !== ''
+      ? normalizePhoneNumber(customer.telefon)
+      : null
+
+  const payload: MusteriInsert = {
+    ...customer,
+    telefon: normalizedTelefon,
+    // Eğer formda kaynak seçmezsen, manuel müşteri olarak işaretle
+    kaynak: customer.kaynak ?? 'Manuel'
+  }
+
   const { data, error } = await supabase
     .from('musteriler')
-    .insert(customer)
+    .insert(payload)
     .select()
 
   if (error) throw error
@@ -246,9 +259,19 @@ export async function updateCustomer(
   id: number,
   updates: Database['public']['Tables']['musteriler']['Update']
 ) {
+  const normalizedTelefon =
+    updates.telefon && updates.telefon.trim() !== ''
+      ? normalizePhoneNumber(updates.telefon)
+      : updates.telefon
+
+  const payload: Database['public']['Tables']['musteriler']['Update'] = {
+    ...updates,
+    telefon: normalizedTelefon
+  }
+
   const { data, error } = await supabase
     .from('musteriler')
-    .update(updates)
+    .update(payload)
     .eq('id', id)
     .select()
 

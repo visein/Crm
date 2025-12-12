@@ -181,6 +181,7 @@ export function CustomersContent() {
               <SelectContent>
                 <SelectItem value="all">Tüm Kaynaklar</SelectItem>
                 <SelectItem value="Web">Web Sitesi</SelectItem>
+                <SelectItem value="WhatsApp">WhatsApp</SelectItem>
                 <SelectItem value="Phone">Telefon</SelectItem>
                 <SelectItem value="Referral">Referans</SelectItem>
                 <SelectItem value="Social Media">Sosyal Medya</SelectItem>
@@ -233,7 +234,7 @@ export function CustomersContent() {
                     <TableRow key={customer.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{customer.ad_soyad}</div>
+                          <div className="font-medium">{customer.ad_soyad || 'İsimsiz Müşteri'}</div>
                           {customer.dogum_tarihi && (
                             <div className="text-sm text-gray-500">
                               {formatDate(customer.dogum_tarihi)}

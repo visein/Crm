@@ -19,7 +19,7 @@ interface PaymentWithCustomer {
   vade_tarihi: string | null
   aciklama: string | null
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
   } | null
 }
 
@@ -29,14 +29,14 @@ interface ContractWithCustomer {
   bitis_tarihi: string | null
   sozlesme_bedeli: number | null
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
   } | null
 }
 
 interface SalesPipelineWithCustomer {
   satis_durumu: string
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
   } | null
 }
 
@@ -68,7 +68,7 @@ const exportDashboardReport = (
     ['Geciken Ödemeler'],
     ['Müşteri', 'Açıklama', 'Tutar', 'Vade Tarihi'],
     ...overduePayments?.slice(0, 10).map(payment => [
-      payment.musteriler?.ad_soyad || '',
+      payment.musteriler?.ad_soyad || 'İsimsiz Müşteri',
       payment.aciklama || '',
       formatTurkishCurrency(payment.tutar || 0),
       payment.vade_tarihi || ''
@@ -77,7 +77,7 @@ const exportDashboardReport = (
     ['Yaklaşan Sözleşme Bitimleri'],
     ['Müşteri', 'Hizmet Tipi', 'Bitiş Tarihi', 'Tutar'],
     ...expiringContracts?.slice(0, 10).map(contract => [
-      contract.musteriler?.ad_soyad || '',
+      contract.musteriler?.ad_soyad || 'İsimsiz Müşteri',
       contract.hizmet_tipi || '',
       contract.bitis_tarihi || '',
       formatTurkishCurrency(contract.sozlesme_bedeli || 0)
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                 {(overduePayments as PaymentWithCustomer[]).slice(0, 5).map((payment) => (
                   <div key={payment.id} className="flex justify-between items-center py-2 border-b last:border-b-0">
                     <div>
-                      <div className="font-medium">{payment.musteriler?.ad_soyad}</div>
+                      <div className="font-medium">{payment.musteriler?.ad_soyad || 'İsimsiz Müşteri'}</div>
                       <div className="text-sm text-gray-600">{payment.aciklama}</div>
                     </div>
                     <div className="text-right">
@@ -303,7 +303,7 @@ export default function DashboardPage() {
                 {(expiringContracts as ContractWithCustomer[]).slice(0, 5).map((contract) => (
                   <div key={contract.id} className="flex justify-between items-center py-2 border-b last:border-b-0">
                     <div>
-                      <div className="font-medium">{contract.musteriler?.ad_soyad}</div>
+                      <div className="font-medium">{contract.musteriler?.ad_soyad || 'İsimsiz Müşteri'}</div>
                       <div className="text-sm text-gray-600">{contract.hizmet_tipi}</div>
                     </div>
                     <div className="text-right">
