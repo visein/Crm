@@ -2,6 +2,7 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { HizmetTipi } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -105,13 +106,12 @@ export function AddDealModal({ customerId, isOpen, onClose }: AddDealModalProps)
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Sanal Ofis">Sanal Ofis</SelectItem>
-                      <SelectItem value="Coworking">Coworking</SelectItem>
-                      <SelectItem value="Ofis Kiralama">Ofis Kiralama</SelectItem>
-                      <SelectItem value="Toplantı Salonu">Toplantı Salonu</SelectItem>
-                      <SelectItem value="Call Center">Call Center</SelectItem>
-                      <SelectItem value="Posta Kutusu">Posta Kutusu</SelectItem>
-                      <SelectItem value="Diğer">Diğer</SelectItem>
+                      <SelectItem value={HizmetTipi.SANAL_OFIS}>{HizmetTipi.SANAL_OFIS}</SelectItem>
+                      <SelectItem value={HizmetTipi.HAZIR_OFIS}>{HizmetTipi.HAZIR_OFIS}</SelectItem>
+                      <SelectItem value={HizmetTipi.COWORKING}>{HizmetTipi.COWORKING}</SelectItem>
+                      <SelectItem value={HizmetTipi.TOPLANTI}>{HizmetTipi.TOPLANTI}</SelectItem>
+                      <SelectItem value={HizmetTipi.ETKINLIK}>{HizmetTipi.ETKINLIK}</SelectItem>
+                      <SelectItem value={HizmetTipi.DIGER}>{HizmetTipi.DIGER}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

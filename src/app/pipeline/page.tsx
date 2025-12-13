@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
+import { HizmetTipi } from '@/types/database'
 import {
   DndContext,
   DragOverlay,
@@ -57,7 +58,7 @@ import { EditDealModal } from '@/components/modals/EditDealModal'
 // Extended type for pipeline data with joined customer info
 type PipelineDeal = SatisTakip & {
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
     sirket_adi?: string | null
     telefon?: string | null
   } | null
@@ -205,7 +206,7 @@ function DealCard({
               {/* Customer Name - Left aligned, ultra-tight line height */}
               <div className="text-left">
                 <span className="font-medium text-sm leading-[0.9] block">
-                  {deal.musteriler?.ad_soyad}
+                  {deal.musteriler?.ad_soyad || 'İsimsiz Müşteri'}
                 </span>
               </div>
 
@@ -222,7 +223,7 @@ function DealCard({
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
                 <span className="font-medium truncate">
-                  {deal.musteriler?.ad_soyad}
+                  {deal.musteriler?.ad_soyad || 'İsimsiz Müşteri'}
                 </span>
               </div>
 
@@ -631,11 +632,12 @@ export default function PipelinePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tüm Hizmetler</SelectItem>
-                  <SelectItem value="Sanal Ofis">Sanal Ofis</SelectItem>
-                  <SelectItem value="Hazır Ofis">Hazır Ofis</SelectItem>
-                  <SelectItem value="Coworking">Coworking</SelectItem>
-                  <SelectItem value="Toplantı">Toplantı Salonu</SelectItem>
-                  <SelectItem value="Etkinlik">Etkinlik</SelectItem>
+                  <SelectItem value={HizmetTipi.SANAL_OFIS}>{HizmetTipi.SANAL_OFIS}</SelectItem>
+                  <SelectItem value={HizmetTipi.HAZIR_OFIS}>{HizmetTipi.HAZIR_OFIS}</SelectItem>
+                  <SelectItem value={HizmetTipi.COWORKING}>{HizmetTipi.COWORKING}</SelectItem>
+                  <SelectItem value={HizmetTipi.TOPLANTI}>{HizmetTipi.TOPLANTI}</SelectItem>
+                  <SelectItem value={HizmetTipi.ETKINLIK}>{HizmetTipi.ETKINLIK}</SelectItem>
+                  <SelectItem value={HizmetTipi.DIGER}>{HizmetTipi.DIGER}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

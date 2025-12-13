@@ -7,7 +7,7 @@ import type { Musteri, Sozlesme, SatisTakip, Odeme } from '@/types/database'
 // Pipeline deal type with customer info
 type PipelineDeal = SatisTakip & {
   musteriler?: {
-    ad_soyad: string
+    ad_soyad: string | null
     sirket_adi?: string | null
     telefon?: string | null
   } | null

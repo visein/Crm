@@ -307,7 +307,8 @@ export const HizmetTipi = {
   HAZIR_OFIS: 'Hazır Ofis',
   COWORKING: 'Coworking',
   TOPLANTI: 'Toplantı',
-  ETKINLIK: 'Etkinlik'
+  ETKINLIK: 'Etkinlik',
+  DIGER: 'Diğer'
 } as const
 
 export const Gonderen = {

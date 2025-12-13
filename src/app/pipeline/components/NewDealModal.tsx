@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
+import { HizmetTipi } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -37,11 +38,12 @@ interface NewDealModalProps {
 }
 
 const SERVICE_OPTIONS = [
-  'Sanal Ofis',
-  'Hazır Ofis', 
-  'Coworking',
-  'Toplantı',
-  'Etkinlik'
+  HizmetTipi.SANAL_OFIS,
+  HizmetTipi.HAZIR_OFIS,
+  HizmetTipi.COWORKING,
+  HizmetTipi.TOPLANTI,
+  HizmetTipi.ETKINLIK,
+  HizmetTipi.DIGER
 ]
 
 const STATUS_OPTIONS = [
@@ -141,7 +143,7 @@ export function NewDealModal({ isOpen, onOpenChange }: NewDealModalProps) {
                 {customers?.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
                     <div className="flex flex-col">
-                      <span className="font-medium">{customer.ad_soyad}</span>
+                      <span className="font-medium">{customer.ad_soyad || 'İsimsiz Müşteri'}</span>
                       {customer.sirket_adi && (
                         <span className="text-sm text-gray-500">{customer.sirket_adi}</span>
                       )}
