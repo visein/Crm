@@ -131,12 +131,12 @@ export async function fetchContracts(): Promise<(Sozlesme & { musteriler: { ad_s
     .from('sozlesmeler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi)
+      musteriler!sozlesmeler_musteri_id_fkey(ad_soyad, sirket_adi)
     `)
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  return (data || []) as (Sozlesme & { musteriler: { ad_soyad: string | null; sirket_adi?: string | null } | null })[]
+  return (data || []) as unknown as (Sozlesme & { musteriler: { ad_soyad: string | null; sirket_adi?: string | null } | null })[]
 }
 
 // Payment queries
@@ -332,7 +332,7 @@ export async function fetchExpiringContracts(days: number = 30) {
     .from('sozlesmeler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi)
+      musteriler!sozlesmeler_musteri_id_fkey(ad_soyad, sirket_adi)
     `)
     .eq('aktif_mi', true)
     .lte('bitis_tarihi', targetDate.toISOString().split('T')[0])
