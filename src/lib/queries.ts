@@ -84,7 +84,7 @@ export async function fetchSalesPipeline() {
     .from('satis_takip')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi, telefon)
+      musteriler!satis_takip_musteri_id_fkey(ad_soyad, sirket_adi, telefon)
     `)
     .order('created_at', { ascending: false })
 
@@ -145,7 +145,7 @@ export async function fetchPayments() {
     .from('odemeler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi)
+      musteriler!odemeler_musteri_id_fkey(ad_soyad, sirket_adi)
     `)
     .order('vade_tarihi', { ascending: false })
 
@@ -170,7 +170,7 @@ export async function fetchInteractions(customerId?: number) {
     .from('etkilesimler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi, telefon)
+      musteriler!etkilesimler_musteri_id_fkey(ad_soyad, sirket_adi, telefon)
     `)
 
   if (customerId) {
@@ -363,7 +363,7 @@ export async function fetchOverduePayments() {
     .from('odemeler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi)
+      musteriler!odemeler_musteri_id_fkey(ad_soyad, sirket_adi)
     `)
     .in('durum', ['Ödenmedi', 'Gecikmiş'])
     .lt('vade_tarihi', today)
@@ -482,7 +482,7 @@ export async function globalSearch(query: string) {
     .from('satis_takip')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi, telefon)
+      musteriler!satis_takip_musteri_id_fkey(ad_soyad, sirket_adi, telefon)
     `)
     .or(`ilgilenilen_hizmet.ilike.${searchPattern},satis_durumu.ilike.${searchPattern}`)
     .limit(10)
@@ -494,7 +494,7 @@ export async function globalSearch(query: string) {
     .from('sozlesmeler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi, telefon)
+      musteriler!sozlesmeler_musteri_id_fkey(ad_soyad, sirket_adi, telefon)
     `)
     .or(`hizmet_tipi.ilike.${searchPattern}`)
     .limit(10)
@@ -506,7 +506,7 @@ export async function globalSearch(query: string) {
     .from('odemeler')
     .select(`
       *,
-      musteriler(ad_soyad, sirket_adi, telefon)
+      musteriler!odemeler_musteri_id_fkey(ad_soyad, sirket_adi, telefon)
     `)
     .or(`durum.ilike.${searchPattern},aciklama.ilike.${searchPattern}`)
     .limit(10)
