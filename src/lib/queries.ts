@@ -31,11 +31,11 @@ export async function fetchCustomerById(id: number) {
     .from('musteriler')
     .select(`
       *,
-      satis_takip(*),
-      sozlesmeler(*),
-      odemeler(*),
-      etkilesimler(*),
-      operasyon_detaylari(*)
+      satis_takip!satis_takip_musteri_id_fkey(*),
+      sozlesmeler!sozlesmeler_musteri_id_fkey(*),
+      odemeler!odemeler_musteri_id_fkey(*),
+      etkilesimler!etkilesimler_musteri_id_fkey(*),
+      operasyon_detaylari!operasyon_detaylari_musteri_id_fkey(*)
     `)
     .eq('id', id)
     .single()
@@ -413,7 +413,7 @@ export async function fetchCustomersWithOperations() {
     .from('musteriler')
     .select(`
       *,
-      operasyon_detaylari(*)
+      operasyon_detaylari!operasyon_detaylari_musteri_id_fkey(*)
     `)
     .order('created_at', { ascending: false })
 
