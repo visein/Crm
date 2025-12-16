@@ -105,6 +105,10 @@ export interface Database {
           sozlesme_bedeli: number | null
           odeme_periyodu: string | null
           aktif_mi: boolean
+          hatirlatma_30g_gonderildi: boolean
+          hatirlatma_15g_gonderildi: boolean
+          hatirlatma_7g_gonderildi: boolean
+          hatirlatma_3g_gonderildi: boolean
         }
         Insert: {
           id?: number
@@ -116,6 +120,10 @@ export interface Database {
           sozlesme_bedeli?: number | null
           odeme_periyodu?: string | null
           aktif_mi?: boolean
+          hatirlatma_30g_gonderildi?: boolean
+          hatirlatma_15g_gonderildi?: boolean
+          hatirlatma_7g_gonderildi?: boolean
+          hatirlatma_3g_gonderildi?: boolean
         }
         Update: {
           id?: number
@@ -127,6 +135,10 @@ export interface Database {
           sozlesme_bedeli?: number | null
           odeme_periyodu?: string | null
           aktif_mi?: boolean
+          hatirlatma_30g_gonderildi?: boolean
+          hatirlatma_15g_gonderildi?: boolean
+          hatirlatma_7g_gonderildi?: boolean
+          hatirlatma_3g_gonderildi?: boolean
         }
       }
       odemeler: {
